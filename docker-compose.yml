@@ -1,0 +1,14 @@
+# docker-compose.yml — IAAI eLearning 101
+# Lance le frontend en local : docker compose up
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+    ports:
+      - "5173:80"
+    restart: unless-stopped

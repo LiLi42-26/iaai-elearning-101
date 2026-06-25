@@ -2,24 +2,62 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
+import { useAuthStore } from '@/store/authStore'
+import { generateCertificate } from '@/services/certificateService'
+import { supabase } from '@/services/supabaseClient'
 
 export default function QuizResultPage() {
   const { id } = useParams()
   const location = useLocation()
+  const { user } = useAuthStore()
 
-  // Données depuis la navigation (QuizPage) ou mockées
-  const { score = 9, total = 10, quizTitle = 'Quiz — Concepts de programmation' } =
-    location.state || {}
+  const {
+    score        = 0,
+    total        = 0,
+    scorePercent = 0,
+    passed       = false,
+    quizTitle    = 'Quiz',
+    moduleId     = null,
+    passingScore = 80,
+  } = location.state || {}
 
-  const percentage = Math.round((score / total) * 100)
-  const passed = percentage >= 70
+  const [certGenerated, setCertGenerated] = useState(false)
+  const [certLoading, setCertLoading]     = useState(false)
 
-  // ── Animation du score ───────────────────────────────────────────────────
+  // ── Générer le certificat si quiz réussi ────────────────────────────────────
+  useEffect(() => {
+    if (!passed || !user?.id || !moduleId) return
+
+    const generate = async () => {
+      setCertLoading(true)
+      try {
+        await generateCertificate(user.id, moduleId)
+        setCertGenerated(true)
+
+        await supabase.from('user_activity').insert({
+          user_id: user.id,
+          type: 'certificate',
+          title: `Certificat obtenu — ${quizTitle}`,
+          detail: `${scorePercent}%`,
+        })
+      } catch (err) {
+        // Certificat déjà existant = pas une erreur bloquante
+        setCertGenerated(true)
+        console.warn('Certificat:', err?.message)
+      } finally {
+        setCertLoading(false)
+      }
+    }
+
+    generate()
+  }, [passed, user?.id, moduleId])
+
+  // ── Animation du score ───────────────────────────────────────────────────────
   const [displayScore, setDisplayScore] = useState(0)
 
   useEffect(() => {
     let count = 0
-    const target = percentage
+    const target = scorePercent
     const duration = 1500
     const increment = target / (duration / 16)
     const counter = setInterval(() => {
@@ -32,29 +70,25 @@ export default function QuizResultPage() {
       }
     }, 16)
     return () => clearInterval(counter)
-  }, [percentage])
+  }, [scorePercent])
 
-  // ── Cercle SVG ───────────────────────────────────────────────────────────
+  // ── Cercle SVG ───────────────────────────────────────────────────────────────
   const radius = 88
   const circumference = 2 * Math.PI * radius
-  const strokeDashoffset = circumference - (percentage / 100) * circumference
+  const strokeDashoffset = circumference - (scorePercent / 100) * circumference
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center relative overflow-hidden">
 
-      {/* Glows décoratifs */}
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#8127cf]/5 blur-[100px] rounded-full pointer-events-none" />
       <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-pink-500/5 blur-[100px] rounded-full pointer-events-none" />
 
-      {/* Card principale */}
       <div className="w-full max-w-2xl bg-white rounded-2xl border border-[#8127cf]/10
-                      p-10 md:p-16 flex flex-col items-center text-center
-                      relative z-10 shadow-sm">
+                      p-10 md:p-16 flex flex-col items-center text-center relative z-10 shadow-sm">
 
         {/* Trophée */}
         <div className="relative mb-8">
           <div className={`w-32 h-32 flex items-center justify-center rounded-full
-                          animate-bounce
                           ${passed ? 'bg-yellow-50' : 'bg-red-50'}`}>
             <span className={`material-symbols-outlined text-[80px]
                              ${passed ? 'text-yellow-500' : 'text-red-400'}`}>
@@ -70,15 +104,27 @@ export default function QuizResultPage() {
         </div>
 
         {/* Titre */}
-        <h2 className={`text-3xl font-bold font-display mb-2
-                        ${passed ? 'text-green-600' : 'text-red-500'}`}>
+        <h2 className={`text-3xl font-bold font-display mb-2 ${passed ? 'text-green-600' : 'text-red-500'}`}>
           {passed ? 'Félicitations !' : 'Presque !'}
         </h2>
-        <p className="text-lg text-[#7e7385] mb-10">
+        <p className="text-lg text-[#7e7385] mb-4">
           {passed
-            ? `Vous avez réussi le ${quizTitle}`
-            : `Vous n'avez pas atteint le score minimum (70%)`}
+            ? `Vous avez réussi : ${quizTitle}`
+            : `Score minimum requis : ${passingScore}% — Vous avez obtenu ${scorePercent}%`}
         </p>
+
+        {/* Badge certificat */}
+        {passed && (
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-6
+                          ${certGenerated
+                            ? 'bg-green-50 text-green-700 border border-green-200'
+                            : 'bg-[#f0dbff] text-[#8127cf]'}`}>
+            <span className="material-symbols-outlined text-[18px]">
+              {certGenerated ? 'verified' : certLoading ? 'hourglass_empty' : 'workspace_premium'}
+            </span>
+            {certGenerated ? 'Certificat généré !' : certLoading ? 'Génération...' : 'Certificat disponible'}
+          </div>
+        )}
 
         {/* Cercle score */}
         <div className="relative w-48 h-48 mb-10">
@@ -89,16 +135,11 @@ export default function QuizResultPage() {
                 <stop offset="100%" stopColor="#a855f7" />
               </linearGradient>
             </defs>
+            <circle cx="96" cy="96" r={radius} fill="transparent" stroke="#e5eeff" strokeWidth="8" />
             <circle
               cx="96" cy="96" r={radius}
               fill="transparent"
-              stroke="#e5eeff"
-              strokeWidth="8"
-            />
-            <circle
-              cx="96" cy="96" r={radius}
-              fill="transparent"
-              stroke="url(#scoreGradient)"
+              stroke={passed ? 'url(#scoreGradient)' : '#f87171'}
               strokeWidth="12"
               strokeLinecap="round"
               strokeDasharray={circumference}
@@ -108,24 +149,18 @@ export default function QuizResultPage() {
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-5xl font-bold text-[#8127cf]">{displayScore}%</span>
-            <span className="text-xs text-[#7e7385] uppercase tracking-widest mt-1">
-              Score Final
-            </span>
+            <span className="text-xs text-[#7e7385] uppercase tracking-widest mt-1">Score Final</span>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-8 w-full mb-10
-                        border-y border-[#cfc2d6]/20 py-8">
+        <div className="grid grid-cols-2 gap-8 w-full mb-10 border-y border-[#cfc2d6]/20 py-8">
           {[
-            { icon: 'task_alt',    value: `${score}/${total}`, label: 'Réponses correctes' },
-            { icon: 'timer',       value: '06:12',              label: 'Temps total'        },
-            { icon: 'trending_up', value: 'Top 5%',             label: 'Rang global'        },
+            { icon: 'task_alt',          value: `${score}/${total}`,                     label: 'Réponses correctes'  },
+            { icon: 'workspace_premium', value: passed ? `≥${passingScore}%` : `<${passingScore}%`, label: passed ? 'Seuil atteint' : 'Seuil non atteint' },
           ].map((stat, i) => (
             <div key={i} className="flex flex-col items-center gap-1">
-              <span className="material-symbols-outlined text-[#8127cf] text-[28px] mb-1">
-                {stat.icon}
-              </span>
+              <span className="material-symbols-outlined text-[#8127cf] text-[28px] mb-1">{stat.icon}</span>
               <span className="text-2xl font-bold text-[#0b1c30]">{stat.value}</span>
               <span className="text-xs text-[#7e7385]">{stat.label}</span>
             </div>
@@ -135,57 +170,57 @@ export default function QuizResultPage() {
         {/* Boutons */}
         <div className="flex flex-col md:flex-row gap-4 w-full justify-center">
           {passed ? (
-            <Link
-              to={ROUTES.CURRICULUM}
-              className="px-8 py-4 rounded-full text-white font-bold text-sm
-                         flex items-center justify-center gap-2
-                         hover:shadow-lg active:scale-[0.98] transition-all"
-              style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
-            >
-              Continuer vers le Module 4
-              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-            </Link>
+            <>
+              <Link
+                to={ROUTES.CURRICULUM}
+                className="px-8 py-4 rounded-full text-white font-bold text-sm
+                           flex items-center justify-center gap-2
+                           hover:shadow-lg active:scale-[0.98] transition-all"
+                style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
+              >
+                Continuer l'apprentissage
+                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+              </Link>
+              {certGenerated && (
+                <Link
+                  to={ROUTES.CERTIFICATES}
+                  className="px-8 py-4 border-2 border-[#8127cf]/20 text-[#8127cf]
+                             rounded-full font-bold text-sm
+                             flex items-center justify-center gap-2
+                             hover:bg-[#8127cf]/5 active:scale-[0.98] transition-all"
+                >
+                  <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
+                  Voir mon certificat
+                </Link>
+              )}
+            </>
           ) : (
-            <Link
-              to={ROUTES.QUIZ(id)}
-              className="px-8 py-4 rounded-full text-white font-bold text-sm
-                         flex items-center justify-center gap-2
-                         hover:shadow-lg active:scale-[0.98] transition-all"
-              style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
-            >
-              Réessayer le quiz
-              <span className="material-symbols-outlined text-[18px]">refresh</span>
-            </Link>
+            <>
+              <Link
+                to={ROUTES.QUIZ(moduleId)}
+                className="px-8 py-4 rounded-full text-white font-bold text-sm
+                           flex items-center justify-center gap-2
+                           hover:shadow-lg active:scale-[0.98] transition-all"
+                style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
+              >
+                Réessayer le quiz
+                <span className="material-symbols-outlined text-[18px]">refresh</span>
+              </Link>
+              <Link
+                to={ROUTES.MODULE(moduleId)}
+                className="px-8 py-4 border-2 border-[#8127cf]/20 text-[#8127cf]
+                           rounded-full font-bold text-sm
+                           flex items-center justify-center gap-2
+                           hover:bg-[#8127cf]/5 active:scale-[0.98] transition-all"
+              >
+                <span className="material-symbols-outlined text-[18px]">menu_book</span>
+                Revoir le module
+              </Link>
+            </>
           )}
-
-          <button
-            className="px-8 py-4 border-2 border-[#8127cf]/20 text-[#8127cf]
-                       rounded-full font-bold text-sm
-                       flex items-center justify-center gap-2
-                       hover:bg-[#8127cf]/5 active:scale-[0.98] transition-all"
-          >
-            <span className="material-symbols-outlined text-[18px]">visibility</span>
-            Revoir mes réponses
-          </button>
         </div>
 
       </div>
-
-      {/* ARIA FAB */}
-      <button
-        className="fixed bottom-8 right-8 w-14 h-14 rounded-full text-white
-                   shadow-lg flex items-center justify-center
-                   hover:scale-110 active:scale-95 transition-all z-50 group"
-        style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
-      >
-        <span className="material-symbols-outlined text-[28px]">auto_awesome</span>
-        <span className="absolute right-16 bg-[#0b1c30] text-white px-3 py-1
-                         rounded-md text-xs opacity-0 group-hover:opacity-100
-                         transition-opacity whitespace-nowrap">
-          Aide IA contextuelle
-        </span>
-      </button>
-
     </div>
   )
 }

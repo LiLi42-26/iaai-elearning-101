@@ -1,3 +1,4 @@
+// src/constants/routes.js
 // Toutes les routes du projet en un seul endroit.
 export const ROUTES = {
   // Public
@@ -26,6 +27,9 @@ export const ROUTES = {
   QUIZ: (id) => `/quiz/${id}`,
   QUIZ_RESULT: (id) => `/quiz/result/${id}`,
 
+  // Search
+  SEARCH: '/search',
+
   // Certificates
   CERTIFICATES: '/certificates',
   CERTIFICATE_DETAIL: (id) => `/certificates/${id}`,
@@ -39,6 +43,7 @@ export const ROUTES = {
   PROFILE_EDIT: '/profile/edit',
   SETTINGS: '/settings',
   SUBSCRIPTION: '/subscription',
+  UPGRADE: '/subscription',   // ← alias pour les liens "Passer à Premium"
 
   // Admin
   ADMIN: '/admin',

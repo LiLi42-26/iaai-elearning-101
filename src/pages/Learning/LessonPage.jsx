@@ -1,308 +1,361 @@
 // src/pages/Learning/LessonPage.jsx
-import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
+import { useAuthStore } from '@/store/authStore'
+import { getLessonById, getLessonsByModule } from '@/services/courseService'
+import { markLessonComplete, getProgressByModule } from '@/services/progressService'
+import { supabase } from '@/services/supabaseClient'
 
-// ─── Données mockées ─────────────────────────────────────────────────────────
-const lessonData = {
-  3: {
-    title: "Les conditions",
-    moduleTitle: "Module 3 — Concepts fondamentaux de programmation",
-    moduleId: 3,
-    lessonNumber: 3,
-    totalLessons: 6,
-    duration: "12:00",
-    currentTime: "05:24",
-    progress: 45,
-    plan: [
-      { title: "Introduction",   status: 'done'   },
-      { title: "Les variables",  status: 'done'   },
-      { title: "Les conditions", status: 'active' },
-      { title: "Les boucles",    status: 'locked' },
-      { title: "Les fonctions",  status: 'locked' },
-      { title: "Projet Final",   status: 'locked' },
-    ],
-    tip: "En Python l'indentation est obligatoire. Utilisez exactement 4 espaces pour définir le bloc de code qui s'exécute après une condition.",
-    code: [
-      { line: 1, content: [{ text: 'temperature = ', color: '#f8f8f2' }, { text: '35', color: '#bd93f9' }] },
-      { line: 2, content: [] },
-      { line: 3, content: [{ text: 'if ', color: '#ff79c6' }, { text: 'temperature > ', color: '#f8f8f2' }, { text: '30', color: '#bd93f9' }, { text: ':', color: '#f8f8f2' }] },
-      { line: 4, content: [{ text: '    print(', color: '#f8f8f2' }, { text: '"Il fait chaud !"', color: '#f1fa8c' }, { text: ')', color: '#f8f8f2' }] },
-      { line: 5, content: [{ text: 'else', color: '#ff79c6' }, { text: ':', color: '#f8f8f2' }] },
-      { line: 6, content: [{ text: '    print(', color: '#f8f8f2' }, { text: '"C\'est agréable."', color: '#f1fa8c' }, { text: ')', color: '#f8f8f2' }] },
-    ],
-  },
+// ─── Skeleton loader ─────────────────────────────────────────────────────────
+function LessonSkeleton() {
+  return (
+    <div className="pb-12 animate-pulse">
+      <div className="h-6 w-48 bg-[#e5eeff] rounded-full mb-6" />
+      <div className="flex gap-6">
+        <div className="flex-1 space-y-6">
+          <div className="space-y-2">
+            <div className="h-4 w-64 bg-[#e5eeff] rounded" />
+            <div className="h-8 w-96 bg-[#e5eeff] rounded" />
+          </div>
+          <div className="w-full aspect-video bg-[#e5eeff] rounded-2xl" />
+          <div className="h-48 bg-[#e5eeff] rounded-2xl" />
+        </div>
+        <div className="w-64 flex-shrink-0 space-y-4">
+          <div className="h-48 bg-[#e5eeff] rounded-2xl" />
+          <div className="h-32 bg-[#e5eeff] rounded-2xl" />
+        </div>
+      </div>
+    </div>
+  )
 }
 
+// ─── Composant VideoPlayer YouTube ───────────────────────────────────────────
+function VideoPlayer({ videoUrl }) {
+  // Extraire l'ID YouTube depuis l'URL
+  const getYoutubeId = (url) => {
+    if (!url) return null
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)
+    return match ? match[1] : null
+  }
+
+  const videoId = getYoutubeId(videoUrl)
+
+  if (!videoId) {
+    return (
+      <div className="relative w-full aspect-video bg-[#0d0d0d] rounded-2xl
+                      overflow-hidden shadow-xl border border-white/10
+                      flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <span className="material-symbols-outlined text-[80px] text-white/20">
+            play_circle
+          </span>
+          <p className="text-white/40 text-sm">Vidéo bientôt disponible</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-xl border border-white/10">
+      <iframe
+        className="w-full h-full"
+        src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+        title="Leçon vidéo"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  )
+}
+
+// ─── Composant Notes (markdown simplifié) ────────────────────────────────────
+function LessonNotes({ notes }) {
+  if (!notes) return null
+
+  // Rendu basique du markdown (gras, code, listes)
+  const renderLine = (line, i) => {
+    if (line.startsWith('## ')) {
+      return <h3 key={i} className="text-lg font-bold text-[#0b1c30] mt-4 mb-2">{line.slice(3)}</h3>
+    }
+    if (line.startsWith('### ')) {
+      return <h4 key={i} className="text-base font-bold text-[#0b1c30] mt-3 mb-1">{line.slice(4)}</h4>
+    }
+    if (line.startsWith('- ') || line.startsWith('* ')) {
+      return (
+        <li key={i} className="ml-4 text-sm text-[#4d4354] leading-relaxed list-disc">
+          {line.slice(2)}
+        </li>
+      )
+    }
+    if (line.startsWith('```')) {
+      return null // géré dans le bloc
+    }
+    if (line.startsWith('**') && line.endsWith('**')) {
+      return <p key={i} className="font-bold text-[#0b1c30] text-sm">{line.slice(2, -2)}</p>
+    }
+    if (line.trim() === '') {
+      return <div key={i} className="h-2" />
+    }
+    return <p key={i} className="text-sm text-[#4d4354] leading-relaxed">{line}</p>
+  }
+
+  // Séparer les blocs de code
+  const parts = notes.split('```')
+  return (
+    <div className="space-y-1">
+      {parts.map((part, idx) => {
+        if (idx % 2 === 1) {
+          // Bloc de code
+          const lines = part.split('\n')
+          const lang = lines[0] || 'python'
+          const code = lines.slice(1).join('\n')
+          return (
+            <div key={idx} className="bg-[#1e1e2e] rounded-xl overflow-hidden my-3">
+              <div className="flex items-center justify-between px-4 py-2 bg-[#181825] border-b border-white/5">
+                <div className="flex gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+                </div>
+                <span className="text-white/40 font-mono text-xs uppercase tracking-widest">{lang}</span>
+              </div>
+              <pre className="p-4 font-mono text-sm text-[#f8f8f2] leading-relaxed overflow-x-auto">
+                {code}
+              </pre>
+            </div>
+          )
+        }
+        return (
+          <div key={idx}>
+            {part.split('\n').map((line, i) => renderLine(line, i))}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Page principale ──────────────────────────────────────────────────────────
 export default function LessonPage() {
   const { id } = useParams()
-  const lesson = lessonData[id] || lessonData[3]
-  const [codeExecuted, setCodeExecuted] = useState(false)
+  const navigate = useNavigate()
+  const { user } = useAuthStore()
+
+  const [lesson, setLesson]           = useState(null)
+  const [siblings, setSiblings]       = useState([])   // toutes les leçons du module
+  const [progress, setProgress]       = useState(null) // progression du module
+  const [isCompleted, setIsCompleted] = useState(false)
+  const [completing, setCompleting]   = useState(false)
+  const [loading, setLoading]         = useState(true)
+  const [error, setError]             = useState(null)
+
+  // ── Charger la leçon ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!id) return
+    setLoading(true)
+    setError(null)
+
+    const load = async () => {
+      try {
+        const lessonData = await getLessonById(id)
+        setLesson(lessonData)
+
+        // Charger les leçons du même module (pour le plan + navigation)
+        const siblingsData = await getLessonsByModule(lessonData.module_id)
+        setSiblings(siblingsData)
+
+        // Charger la progression si connecté
+        if (user?.id) {
+          const prog = await getProgressByModule(user.id, lessonData.module_id)
+          setProgress(prog)
+
+          // Vérifier si cette leçon est déjà complétée
+          const { data: existing } = await supabase
+            .from('user_progress')
+            .select('completed')
+            .eq('user_id', user.id)
+            .eq('lesson_id', id)
+            .single()
+          setIsCompleted(existing?.completed || false)
+        }
+      } catch (err) {
+        console.error('Erreur chargement leçon:', err)
+        setError('Impossible de charger cette leçon.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    load()
+  }, [id, user?.id])
+
+  // ── Marquer comme complétée ──────────────────────────────────────────────────
+  const handleComplete = async () => {
+    if (!user?.id || !lesson || isCompleted || completing) return
+    setCompleting(true)
+    try {
+      await markLessonComplete(user.id, lesson.id, lesson.module_id)
+
+      // Logger l'activité
+      await supabase.from('user_activity').insert({
+        user_id: user.id,
+        type: 'lesson',
+        title: `Leçon vue — ${lesson.title}`,
+        detail: lesson.modules?.title || '',
+      })
+
+      setIsCompleted(true)
+
+      // Rafraîchir la progression
+      const prog = await getProgressByModule(user.id, lesson.module_id)
+      setProgress(prog)
+    } catch (err) {
+      console.error('Erreur marquage leçon:', err)
+    } finally {
+      setCompleting(false)
+    }
+  }
+
+  // ── Navigation ───────────────────────────────────────────────────────────────
+  const currentIndex = siblings.findIndex(l => l.id === id)
+  const prevLesson   = currentIndex > 0 ? siblings[currentIndex - 1] : null
+  const nextLesson   = currentIndex < siblings.length - 1 ? siblings[currentIndex + 1] : null
+
+  // ── Statut de chaque leçon dans le plan ─────────────────────────────────────
+  const getLessonStatus = (sibling) => {
+    if (sibling.id === id) return 'active'
+    const sibIndex = siblings.findIndex(l => l.id === sibling.id)
+    if (sibIndex < currentIndex) return 'done'
+    return 'locked'
+  }
+
+  // ── Rendu ────────────────────────────────────────────────────────────────────
+  if (loading) return <LessonSkeleton />
+
+  if (error) return (
+    <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+      <span className="material-symbols-outlined text-[60px] text-[#cfc2d6]">error</span>
+      <p className="text-[#7e7385]">{error}</p>
+      <Link to={ROUTES.CURRICULUM} className="text-[#8127cf] font-bold hover:underline">
+        Retour au curriculum
+      </Link>
+    </div>
+  )
+
+  if (!lesson) return null
+
+  const moduleTitle   = lesson.modules?.title || 'Module'
+  const lessonNumber  = currentIndex + 1
+  const totalLessons  = siblings.length
 
   return (
     <div className="pb-12">
 
-      {/* ── Breadcrumb ───────────────────────────────────────────────────────── */}
+      {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-6">
         <Link
-          to={ROUTES.MODULE(lesson.moduleId)}
+          to={ROUTES.MODULE(lesson.module_id)}
           className="inline-flex items-center gap-2 text-[#8127cf] text-sm font-medium hover:gap-3 transition-all"
         >
           <span className="material-symbols-outlined text-[18px]">arrow_back</span>
           Retour au module
         </Link>
         <span className="text-sm text-[#7e7385]">
-          Leçon {lesson.lessonNumber} / {lesson.totalLessons}
+          Leçon {lessonNumber} / {totalLessons}
         </span>
       </div>
 
-      {/* ── Layout 2 colonnes ────────────────────────────────────────────────── */}
+      {/* ── Layout 2 colonnes ──────────────────────────────────────────────── */}
       <div className="flex gap-6">
 
-        {/* ── Colonne gauche (75%) ─────────────────────────────────────────────── */}
+        {/* ── Colonne gauche (75%) ─────────────────────────────────────────── */}
         <div className="flex-1 space-y-6">
 
           {/* Titre */}
           <div>
-            <p className="text-sm text-[#7e7385] mb-1">{lesson.moduleTitle}</p>
+            <p className="text-sm text-[#7e7385] mb-1">{moduleTitle}</p>
             <h2 className="text-2xl font-bold font-display text-[#0b1c30]">
-              Leçon {lesson.lessonNumber} — {lesson.title}
+              Leçon {lessonNumber} — {lesson.title}
             </h2>
           </div>
 
-          {/* ── Lecteur vidéo ──────────────────────────────────────────────────── */}
-          <div className="relative w-full aspect-video bg-[#0d0d0d] rounded-2xl
-                          overflow-hidden shadow-xl border border-white/10">
-            {/* Simulation animation Manim */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <div className="text-4xl font-bold text-cyan-400 font-mono">
-                  if <span className="text-white">temperature &gt; 30</span>:
-                </div>
-                <div className="text-3xl text-pink-400 font-mono animate-pulse">
-                  print("Il fait chaud !")
-                </div>
+          {/* Lecteur vidéo */}
+          <VideoPlayer videoUrl={lesson.video_url} />
+
+          {/* Bouton Marquer comme complétée */}
+          <div className="flex items-center gap-4">
+            {isCompleted ? (
+              <div className="flex items-center gap-2 px-6 py-3 rounded-xl
+                              bg-green-50 border border-green-200 text-green-700 font-bold text-sm">
+                <span className="material-symbols-outlined text-[20px]">check_circle</span>
+                Leçon complétée !
               </div>
-            </div>
-
-            {/* Contrôles vidéo */}
-            <div className="absolute bottom-0 left-0 right-0 p-6
-                            bg-gradient-to-t from-black/80 to-transparent pt-12">
-              <div className="flex flex-col gap-4">
-                {/* Barre de progression */}
-                <div className="relative w-full h-1.5 bg-white/20 rounded-full cursor-pointer">
-                  <div
-                    className="absolute top-0 left-0 h-full rounded-full"
-                    style={{
-                      width: `${lesson.progress}%`,
-                      background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)'
-                    }}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <button className="text-white hover:text-pink-400 transition-colors">
-                      <span className="material-symbols-outlined text-[32px]">play_circle</span>
-                    </button>
-                    <span className="text-white text-sm font-mono">
-                      {lesson.currentTime} / {lesson.duration}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button className="text-white hover:text-pink-400 transition-colors">
-                      <span className="material-symbols-outlined">closed_caption</span>
-                    </button>
-                    <button className="text-white hover:text-pink-400 transition-colors">
-                      <span className="material-symbols-outlined">fullscreen</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Exercice pratique ─────────────────────────────────────────────── */}
-          <div className="bg-white rounded-2xl p-8 border border-cyan-100 shadow-sm">
-            <div className="flex items-center gap-4 mb-4">
-              <span className="px-3 py-1 rounded-full text-white text-[10px]
-                               uppercase tracking-widest font-bold"
-                    style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}>
-                Exercice Pratique
-              </span>
-            </div>
-            <h3 className="text-xl font-bold font-display text-[#0b1c30] mb-1">
-              Testez votre code
-            </h3>
-            <p className="text-[#7e7385] mb-6 text-sm">
-              Complétez le code selon la température du jour pour afficher le bon message.
-            </p>
-
-            {/* Éditeur de code */}
-            <div className="bg-[#1e1e2e] rounded-xl overflow-hidden shadow-inner mb-6">
-              {/* Header éditeur */}
-              <div className="flex items-center justify-between px-4 py-3
-                              bg-[#181825] border-b border-white/5">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
-                  <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
-                  <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
-                </div>
-                <span className="text-white/40 font-mono text-xs uppercase tracking-widest">
-                  python
-                </span>
-              </div>
-
-              {/* Code */}
-              <div className="p-6 font-mono text-sm leading-loose">
-                {lesson.code.map((row) => (
-                  <div key={row.line} className="flex">
-                    <span className="w-8 text-white/20 select-none">{row.line}</span>
-                    <span>
-                      {row.content.map((part, i) => (
-                        <span key={i} style={{ color: part.color }}>{part.text}</span>
-                      ))}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Bouton exécuter */}
-            <div className="flex items-center gap-4 mb-6">
+            ) : (
               <button
-                onClick={() => setCodeExecuted(true)}
-                className="px-8 py-3 rounded-xl text-white font-bold shadow-md
-                           hover:scale-105 active:scale-95 transition-all"
+                onClick={handleComplete}
+                disabled={completing || !user?.id}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl text-white
+                           font-bold text-sm transition-all hover:scale-105 active:scale-95
+                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
               >
-                Exécuter le code
+                <span className="material-symbols-outlined text-[20px]">
+                  {completing ? 'hourglass_empty' : 'check_circle'}
+                </span>
+                {completing ? 'Enregistrement...' : 'Marquer comme complétée'}
               </button>
-            </div>
+            )}
 
-            {/* Output */}
-            {codeExecuted && (
-              <div className="bg-[#0b1c30] rounded-xl p-6 border border-white/5 font-mono text-sm">
-                <div className="text-cyan-400 mb-2">&gt; Il fait chaud !</div>
-                <div className="text-green-400 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                  Code exécuté avec succès
-                </div>
-              </div>
+            {nextLesson && isCompleted && (
+              <Link
+                to={ROUTES.LESSON(nextLesson.id)}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl
+                           border border-[#8127cf] text-[#8127cf] font-bold text-sm
+                           hover:bg-purple-50 transition-colors"
+              >
+                Leçon suivante
+                <span className="material-symbols-outlined text-[20px]">east</span>
+              </Link>
             )}
           </div>
-          {/* ── Notes de la leçon ────────────────────────────────────────────── */}
-<div className="bg-white rounded-2xl border-l-4 border-[#8127cf] p-8 shadow-sm">
-  <div className="flex items-center gap-3 mb-6">
-    <span className="material-symbols-outlined text-[#8127cf] text-[24px]">
-      description
-    </span>
-    <h3 className="text-xl font-bold font-display text-[#0b1c30]">
-      Notes de la leçon
-    </h3>
-  </div>
 
-  <div className="space-y-6 text-sm text-[#4d4354] leading-relaxed">
-    <div>
-      <h4 className="font-bold text-[#0b1c30] mb-2">
-        Les structures conditionnelles (If/Else) :
-      </h4>
-      <ul className="space-y-2 list-disc list-inside">
-        <li>
-          Permettent d'exécuter des blocs de code différents selon
-          qu'une condition soit vraie ou fausse.
-        </li>
-        <li>
-          La condition est toujours une expression{' '}
-          <span className="font-bold">booléenne</span> (True ou False).
-        </li>
-        <li>
-          L'indentation en Python est cruciale pour définir la portée
-          de la condition.
-        </li>
-      </ul>
-    </div>
+          {/* Notes de la leçon */}
+          {lesson.content_notes && (
+            <div className="bg-white rounded-2xl border-l-4 border-[#8127cf] p-8 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="material-symbols-outlined text-[#8127cf] text-[24px]">description</span>
+                <h3 className="text-xl font-bold font-display text-[#0b1c30]">Notes de la leçon</h3>
+              </div>
+              <LessonNotes notes={lesson.content_notes} />
+            </div>
+          )}
 
-    {/* Exemple de code dans les notes */}
-    <div className="bg-[#1e1e2e] rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2
-                      bg-[#181825] border-b border-white/5">
-        <div className="flex gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
-          <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
-          <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
-        </div>
-        <span className="text-white/40 font-mono text-xs uppercase tracking-widest">
-          python
-        </span>
-      </div>
-      <div className="p-4 font-mono text-sm leading-loose">
-        <div className="flex">
-          <span className="w-8 text-white/20 select-none">1</span>
-          <span>
-            <span style={{ color: '#ff79c6' }}>if </span>
-            <span style={{ color: '#f8f8f2' }}>temperature </span>
-            <span style={{ color: '#ff79c6' }}>&gt; </span>
-            <span style={{ color: '#bd93f9' }}>30</span>
-            <span style={{ color: '#f8f8f2' }}>:</span>
-          </span>
-        </div>
-        <div className="flex">
-          <span className="w-8 text-white/20 select-none">2</span>
-          <span>
-            <span style={{ color: '#f8f8f2' }}>    print(</span>
-            <span style={{ color: '#f1fa8c' }}>"Il fait chaud"</span>
-            <span style={{ color: '#f8f8f2' }}>)</span>
-          </span>
-        </div>
-        <div className="flex">
-          <span className="w-8 text-white/20 select-none">3</span>
-          <span style={{ color: '#ff79c6' }}>else</span>
-          <span style={{ color: '#f8f8f2' }}>:</span>
-        </div>
-        <div className="flex">
-          <span className="w-8 text-white/20 select-none">4</span>
-          <span>
-            <span style={{ color: '#f8f8f2' }}>    print(</span>
-            <span style={{ color: '#f1fa8c' }}>"Il fait frais"</span>
-            <span style={{ color: '#f8f8f2' }}>)</span>
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <h4 className="font-bold text-[#0b1c30] mb-2">Points clés à retenir :</h4>
-      <ul className="space-y-2 list-disc list-inside">
-        <li><span className="font-mono text-[#8127cf] font-bold">IF</span> = Si vrai, alors fais ceci.</li>
-        <li><span className="font-mono text-[#8127cf] font-bold">ELSE</span> = Sinon, fais autre chose.</li>
-        <li><span className="font-mono text-[#8127cf] font-bold">ELIF</span> = Sinon si (condition supplémentaire).</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-          {/* ── Navigation leçons ─────────────────────────────────────────────── */}
+          {/* Navigation leçons */}
           <div className="flex items-center justify-between py-4">
-            <Link
-              to={ROUTES.LESSON(lesson.lessonNumber - 1)}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl
-                         border border-[#8127cf] text-[#8127cf] font-bold text-sm
-                         hover:bg-[#8127cf]/5 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[20px]">west</span>
-              Leçon précédente
-            </Link>
+            {prevLesson ? (
+              <Link
+                to={ROUTES.LESSON(prevLesson.id)}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl
+                           border border-[#8127cf] text-[#8127cf] font-bold text-sm
+                           hover:bg-[#8127cf]/5 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">west</span>
+                Leçon précédente
+              </Link>
+            ) : (
+              <div />
+            )}
 
             {/* Points de progression */}
             <div className="flex gap-2">
-              {lesson.plan.map((_, i) => (
+              {siblings.map((_, i) => (
                 <div
                   key={i}
                   className={`rounded-full transition-all ${
-                    i + 1 < lesson.lessonNumber
+                    i < currentIndex
                       ? 'w-2.5 h-2.5 bg-green-400'
-                      : i + 1 === lesson.lessonNumber
+                      : i === currentIndex
                         ? 'w-3 h-3 bg-[#8127cf]'
                         : 'w-2.5 h-2.5 bg-[#cfc2d6]/30'
                   }`}
@@ -310,88 +363,112 @@ export default function LessonPage() {
               ))}
             </div>
 
-            <Link
-              to={ROUTES.LESSON(lesson.lessonNumber + 1)}
-              className="flex items-center gap-2 px-8 py-3 rounded-xl
-                         text-white font-bold text-sm transition-all
-                         hover:scale-105 active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
-            >
-              Leçon suivante
-              <span className="material-symbols-outlined text-[20px]">east</span>
-            </Link>
+            {nextLesson ? (
+              <Link
+                to={ROUTES.LESSON(nextLesson.id)}
+                className="flex items-center gap-2 px-8 py-3 rounded-xl
+                           text-white font-bold text-sm transition-all
+                           hover:scale-105 active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
+              >
+                Leçon suivante
+                <span className="material-symbols-outlined text-[20px]">east</span>
+              </Link>
+            ) : (
+              <Link
+                to={ROUTES.MODULE(lesson.module_id)}
+                className="flex items-center gap-2 px-8 py-3 rounded-xl
+                           text-white font-bold text-sm transition-all
+                           hover:scale-105 active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
+              >
+                Terminer le module
+                <span className="material-symbols-outlined text-[20px]">emoji_events</span>
+              </Link>
+            )}
           </div>
 
         </div>
 
-        {/* ── Colonne droite (25%) ─────────────────────────────────────────────── */}
+        {/* ── Colonne droite (25%) ─────────────────────────────────────────── */}
         <div className="w-64 flex-shrink-0 space-y-4">
 
           {/* Plan du cours */}
           <div className="bg-white rounded-2xl p-5 border border-[#8127cf]/10 shadow-sm">
-            <h3 className="text-base font-bold font-display text-[#0b1c30] mb-4">
-              Plan du cours
-            </h3>
+            <h3 className="text-base font-bold font-display text-[#0b1c30] mb-4">Plan du cours</h3>
             <div className="space-y-1">
-              {lesson.plan.map((item, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center gap-3 p-2.5 rounded-lg
-                              ${item.status === 'active' ? 'bg-[#f0dbff]' : ''}
-                              ${item.status === 'locked' ? 'opacity-40' : ''}`}
-                >
-                  <span className={`material-symbols-outlined text-[18px]
-                                   ${item.status === 'done'   ? 'text-green-500' :
-                                     item.status === 'active' ? 'text-[#8127cf]' :
-                                     'text-[#7e7385]'}`}>
-                    {item.status === 'done'   ? 'check_circle' :
-                     item.status === 'active' ? 'play_circle'  : 'lock'}
-                  </span>
-                  <span className={`text-sm
-                                   ${item.status === 'active'
-                                     ? 'text-[#8127cf] font-bold'
-                                     : 'text-[#4d4354]'}`}>
-                    {item.title}
-                  </span>
-                </div>
-              ))}
+              {siblings.map((sibling) => {
+                const status = getLessonStatus(sibling)
+                return (
+                  <Link
+                    key={sibling.id}
+                    to={ROUTES.LESSON(sibling.id)}
+                    className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors
+                                ${status === 'active' ? 'bg-[#f0dbff]' : 'hover:bg-[#f8f5ff]'}
+                                ${status === 'locked' ? 'opacity-40 pointer-events-none' : ''}`}
+                  >
+                    <span className={`material-symbols-outlined text-[18px]
+                                     ${status === 'done'   ? 'text-green-500' :
+                                       status === 'active' ? 'text-[#8127cf]' :
+                                       'text-[#7e7385]'}`}>
+                      {status === 'done' ? 'check_circle' : status === 'active' ? 'play_circle' : 'lock'}
+                    </span>
+                    <span className={`text-sm ${status === 'active' ? 'text-[#8127cf] font-bold' : 'text-[#4d4354]'}`}>
+                      {sibling.title}
+                    </span>
+                  </Link>
+                )
+              })}
             </div>
           </div>
 
           {/* Progression */}
+          {progress && (
+            <div className="bg-white rounded-2xl p-5 border border-[#8127cf]/10 shadow-sm">
+              <h3 className="text-base font-bold font-display text-[#0b1c30] mb-4">Progression</h3>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs text-[#7e7385]">Ce module</span>
+                <span className="text-xs font-bold text-[#8127cf]">{progress.percent}%</span>
+              </div>
+              <div className="h-2 w-full bg-[#e5eeff] rounded-full overflow-hidden mb-3">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${progress.percent}%`,
+                    background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)'
+                  }}
+                />
+              </div>
+              <div className="flex items-center gap-2 text-[#7e7385] text-xs">
+                <span className="material-symbols-outlined text-[16px]">assignment_turned_in</span>
+                {progress.completedLessons}/{progress.totalLessons} leçons terminées
+              </div>
+            </div>
+          )}
+
+          {/* Durée */}
           <div className="bg-white rounded-2xl p-5 border border-[#8127cf]/10 shadow-sm">
-            <h3 className="text-base font-bold font-display text-[#0b1c30] mb-4">
-              Progression
-            </h3>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs text-[#7e7385]">Module 3</span>
-              <span className="text-xs font-bold text-[#8127cf]">60%</span>
-            </div>
-            <div className="h-2 w-full bg-[#e5eeff] rounded-full overflow-hidden mb-3">
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: '60%',
-                  background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)'
-                }}
-              />
-            </div>
-            <div className="flex items-center gap-2 text-[#7e7385] text-xs">
-              <span className="material-symbols-outlined text-[16px]">assignment_turned_in</span>
-              3/6 leçons terminées
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center">
+                <span className="material-symbols-outlined text-cyan-500">timer</span>
+              </div>
+              <div>
+                <p className="text-xs text-[#7e7385]">Durée estimée</p>
+                <p className="text-base font-bold text-[#0b1c30]">{lesson.duration_minutes} min</p>
+              </div>
             </div>
           </div>
 
           {/* Astuce */}
-          <div className="bg-[#fef9c3] rounded-2xl p-5 border border-yellow-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-3 text-[#854d0e]">
-              <span className="material-symbols-outlined text-[20px]">lightbulb</span>
-              <h3 className="text-base font-bold">Astuce</h3>
+          {lesson.tip && (
+            <div className="bg-[#fef9c3] rounded-2xl p-5 border border-yellow-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-3 text-[#854d0e]">
+                <span className="material-symbols-outlined text-[20px]">lightbulb</span>
+                <h3 className="text-base font-bold">Astuce</h3>
+              </div>
+              <p className="text-[#854d0e] text-xs leading-relaxed">{lesson.tip}</p>
             </div>
-            <p className="text-[#854d0e] text-xs leading-relaxed">
-              {lesson.tip}
-            </p>
-          </div>
+          )}
 
         </div>
       </div>

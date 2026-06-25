@@ -1,74 +1,110 @@
 // src/pages/Quiz/QuizPage.jsx
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
+import { useAuthStore } from '@/store/authStore'
+import { getQuizByModule, submitQuizAttempt, getBestScore } from '@/services/quizService'
+import { supabase } from '@/services/supabaseClient'
 
-// ─── Données mockées ─────────────────────────────────────────────────────────
-const quizData = {
-  3: {
-    title: 'Quiz — Concepts de programmation',
-    subtitle: 'Testez vos connaissances sur le Module 3',
-    moduleId: 3,
-    questions: 10,
-    duration: 8,
-    passingScore: 70,
-    attempts: 1,
-    questionsList: [
-      {
-        id: 1,
-        question: "Quelle est la syntaxe correcte pour une condition en Python ?",
-        options: [
-          "if (x > 5) { }",
-          "if x > 5:",
-          "if x > 5 then",
-          "condition x > 5:",
-        ],
-        correct: 1,
-      },
-      {
-        id: 2,
-        question: "Que fait le mot-clé 'else' en Python ?",
-        options: [
-          "Il répète un bloc de code",
-          "Il définit une fonction",
-          "Il exécute un bloc si la condition if est fausse",
-          "Il importe une bibliothèque",
-        ],
-        correct: 2,
-      },
-      {
-        id: 3,
-        question: "Quelle est la valeur de x après : x = 5 + 3 * 2 ?",
-        options: ["16", "11", "13", "10"],
-        correct: 1,
-      },
-    ],
-  },
+// ─── Skeleton ────────────────────────────────────────────────────────────────
+function QuizSkeleton() {
+  return (
+    <div className="min-h-[80vh] flex items-center justify-center">
+      <div className="w-full max-w-2xl bg-white rounded-2xl p-10 border border-[#8127cf]/10 animate-pulse">
+        <div className="flex flex-col items-center gap-6">
+          <div className="w-16 h-16 rounded-full bg-[#e5eeff]" />
+          <div className="h-8 w-72 bg-[#e5eeff] rounded" />
+          <div className="h-5 w-48 bg-[#e5eeff] rounded" />
+          <div className="flex gap-8 mt-4">
+            {[1,2,3,4].map(i => <div key={i} className="h-10 w-16 bg-[#e5eeff] rounded" />)}
+          </div>
+          <div className="h-14 w-full bg-[#e5eeff] rounded-xl mt-4" />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function QuizPage() {
-  const { id } = useParams()
+  const { id } = useParams()           // id = moduleId
   const navigate = useNavigate()
-  const quiz = quizData[id] || quizData[3]
+  const { user } = useAuthStore()
 
-  const [phase, setPhase] = useState('intro') // 'intro' | 'questions'
-  const [currentQ, setCurrentQ] = useState(0)
-  const [selected, setSelected] = useState(null)
-  const [answers, setAnswers] = useState([])
-  const [timeLeft] = useState(quiz.duration * 60)
+  const [quiz, setQuiz]           = useState(null)
+  const [bestScore, setBestScore] = useState(null)
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState(null)
+
+  // Phase : 'intro' | 'questions' | 'submitting'
+  const [phase, setPhase]         = useState('intro')
+  const [currentQ, setCurrentQ]   = useState(0)
+  const [selected, setSelected]   = useState(null)
+  const [answers, setAnswers]     = useState([])   // [{ questionId, answerId }]
+
+  // Timer
+  const [timeLeft, setTimeLeft]   = useState(0)
+  const timerRef                  = useRef(null)
+  // Refs pour capturer les valeurs courantes dans le timer (évite le stale closure)
+  const answersRef                = useRef([])
+  const selectedRef               = useRef(null)
+
+  // ── Charger le quiz du module ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!id) return
+    setLoading(true)
+
+    const load = async () => {
+      try {
+        const quizData = await getQuizByModule(id)
+        setQuiz(quizData)
+        setTimeLeft((quizData.questions?.length || 5) * 60) // 1 min par question
+
+        if (user?.id) {
+          const best = await getBestScore(user.id, quizData.id)
+          setBestScore(best)
+        }
+      } catch (err) {
+        console.error('Erreur chargement quiz:', err)
+        setError('Impossible de charger ce quiz.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    load()
+  }, [id, user?.id])
+
+  // Synchroniser les refs à chaque render pour que le timer ait toujours les valeurs fraîches
+  answersRef.current  = answers
+  selectedRef.current = selected
+
+  // ── Timer (démarre quand phase = questions) ─────────────────────────────────
+  useEffect(() => {
+    if (phase !== 'questions') return
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current)
+          handleFinish([...answersRef.current, { questionId: null, answerId: selectedRef.current }])
+          return 0
+        }
+        return t - 1
+      })
+    }, 1000)
+    return () => clearInterval(timerRef.current)
+  }, [phase])
+
+  // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleStart = () => setPhase('questions')
 
-  const handleAnswer = (optionIndex) => setSelected(optionIndex)
+  const handleAnswer = (answerId) => setSelected(answerId)
 
   const handleNext = () => {
-    const newAnswers = [...answers, selected]
-    if (currentQ + 1 >= quiz.questionsList.length) {
-      const score = newAnswers.reduce((acc, ans, i) => {
-        return acc + (ans === quiz.questionsList[i].correct ? 1 : 0)
-      }, 0)
-      navigate(`/quiz/result/${id}`, {
-        state: { score, total: quiz.questionsList.length, quizTitle: quiz.title }
-      })
+    const question = quiz.questions[currentQ]
+    const newAnswers = [...answers, { questionId: question.id, answerId: selected }]
+
+    if (currentQ + 1 >= quiz.questions.length) {
+      handleFinish(newAnswers)
     } else {
       setAnswers(newAnswers)
       setCurrentQ(currentQ + 1)
@@ -76,38 +112,99 @@ export default function QuizPage() {
     }
   }
 
-  // ── Phase : Intro ───────────────────────────────────────────────────────────
+  const handleFinish = async (finalAnswers) => {
+    clearInterval(timerRef.current)
+    setPhase('submitting')
+
+    try {
+      const result = await submitQuizAttempt(user.id, quiz.id, id, finalAnswers, quiz.passing_score)
+
+      // Logger l'activité
+      await supabase.from('user_activity').insert({
+        user_id: user.id,
+        type: 'quiz',
+        title: `Quiz terminé — ${quiz.title}`,
+        detail: `${result.score}%`,
+      })
+
+      // Naviguer vers les résultats
+      navigate(ROUTES.QUIZ_RESULT(quiz.id), {
+        state: {
+          score: result.correct,
+          total: result.total,
+          scorePercent: result.score,
+          passed: result.passed,
+          quizTitle: quiz.title,
+          moduleId: id,
+          passingScore: quiz.passing_score,
+        }
+      })
+    } catch (err) {
+      console.error('Erreur soumission quiz:', err)
+      setPhase('questions')
+    }
+  }
+
+  // ── Format timer ─────────────────────────────────────────────────────────────
+  const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  const timerColor = timeLeft < 30 ? 'text-red-500' : 'text-[#8127cf]'
+
+  // ── Rendu ─────────────────────────────────────────────────────────────────────
+  if (loading) return <QuizSkeleton />
+
+  if (error) return (
+    <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+      <span className="material-symbols-outlined text-[60px] text-[#cfc2d6]">error</span>
+      <p className="text-[#7e7385]">{error}</p>
+      <Link to={ROUTES.CURRICULUM} className="text-[#8127cf] font-bold hover:underline">
+        Retour au curriculum
+      </Link>
+    </div>
+  )
+
+  if (!quiz) return null
+
+  const totalQuestions = quiz.questions?.length || 0
+
+  // ── Phase : Submitting ────────────────────────────────────────────────────────
+  if (phase === 'submitting') {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-6">
+          <div className="w-16 h-16 rounded-full bg-[#f0dbff] flex items-center justify-center animate-spin">
+            <span className="material-symbols-outlined text-[#8127cf] text-[32px]">hourglass_empty</span>
+          </div>
+          <p className="text-[#0b1c30] font-bold text-lg">Calcul de votre score...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Phase : Intro ─────────────────────────────────────────────────────────────
   if (phase === 'intro') {
     return (
       <div className="min-h-[80vh] flex items-center justify-center relative">
-        {/* Glows décoratifs */}
         <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-[#8127cf]/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-[-10%] left-[10%] w-80 h-80 bg-pink-500/10 blur-[100px] rounded-full pointer-events-none" />
 
-        {/* Card principale */}
-        <div className="w-full max-w-2xl bg-white rounded-2xl p-10 border
-                        border-[#8127cf]/10 shadow-sm relative z-10">
+        <div className="w-full max-w-2xl bg-white rounded-2xl p-10 border border-[#8127cf]/10 shadow-sm relative z-10">
           <div className="flex flex-col items-center text-center">
 
             {/* Icône */}
-            <div className="w-16 h-16 bg-[#f0dbff] rounded-full flex items-center
-                            justify-center mb-6">
+            <div className="w-16 h-16 bg-[#f0dbff] rounded-full flex items-center justify-center mb-6">
               <span className="material-symbols-outlined text-[#8127cf] text-[32px]">quiz</span>
             </div>
 
             {/* Titre */}
-            <h1 className="text-3xl font-bold font-display text-[#0b1c30] mb-2">
-              {quiz.title}
-            </h1>
-            <p className="text-lg text-[#7e7385] mb-8">{quiz.subtitle}</p>
+            <h1 className="text-3xl font-bold font-display text-[#0b1c30] mb-2">{quiz.title}</h1>
+            <p className="text-lg text-[#7e7385] mb-8">Testez vos connaissances sur ce module</p>
 
             {/* Stats */}
             <div className="flex flex-wrap justify-center gap-8 mb-8 w-full">
               {[
-                { value: quiz.questions,     label: 'questions' },
-                { value: quiz.duration,      label: 'minutes'   },
-                { value: `${quiz.passingScore}%`, label: 'pour réussir' },
-                { value: quiz.attempts,      label: 'tentative' },
+                { value: totalQuestions,          label: 'questions'    },
+                { value: totalQuestions,           label: 'minutes'      },
+                { value: `${quiz.passing_score}%`, label: 'pour réussir' },
               ].map((stat, i) => (
                 <div key={i} className="flex flex-col items-center">
                   <span className="text-2xl font-bold text-[#8127cf]">{stat.value}</span>
@@ -116,6 +213,16 @@ export default function QuizPage() {
               ))}
             </div>
 
+            {/* Meilleur score précédent */}
+            {bestScore && (
+              <div className="w-full mb-6 px-6 py-3 bg-[#f0dbff] rounded-xl flex items-center justify-between">
+                <span className="text-sm text-[#4d4354]">Votre meilleur score</span>
+                <span className={`font-bold text-sm ${bestScore.passed ? 'text-green-600' : 'text-[#8127cf]'}`}>
+                  {bestScore.score}% {bestScore.passed ? '✓ Réussi' : '✗ Échoué'}
+                </span>
+              </div>
+            )}
+
             <hr className="w-full border-[#f0f0f5] mb-8" />
 
             {/* Info list */}
@@ -123,14 +230,12 @@ export default function QuizPage() {
               {[
                 'Questions à choix multiple',
                 'Une question à la fois',
+                `Score minimum requis : ${quiz.passing_score}%`,
                 'Résultat immédiat à la fin',
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-4 text-[#4d4354]">
-                  <div className="w-6 h-6 bg-[#f0dbff] rounded-full flex items-center
-                                  justify-center flex-shrink-0">
-                    <span className="material-symbols-outlined text-[14px] text-[#8127cf]">
-                      check_circle
-                    </span>
+                  <div className="w-6 h-6 bg-[#f0dbff] rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-[14px] text-[#8127cf]">check_circle</span>
                   </div>
                   <span className="text-sm">{item}</span>
                 </li>
@@ -148,9 +253,8 @@ export default function QuizPage() {
             </button>
 
             <Link
-              to={ROUTES.MODULE(quiz.moduleId)}
-              className="flex items-center gap-2 text-[#8127cf] text-sm font-medium
-                         hover:underline"
+              to={ROUTES.MODULE(id)}
+              className="flex items-center gap-2 text-[#8127cf] text-sm font-medium hover:underline"
             >
               <span className="material-symbols-outlined text-[18px]">arrow_back</span>
               Retour au module
@@ -158,22 +262,13 @@ export default function QuizPage() {
 
           </div>
         </div>
-
-        {/* ARIA FAB */}
-        <button className="fixed bottom-8 right-8 w-16 h-16 rounded-full text-white
-                           shadow-lg flex flex-col items-center justify-center
-                           hover:scale-110 active:scale-95 transition-all z-50"
-                style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}>
-          <span className="material-symbols-outlined text-[24px]">chat_bubble</span>
-          <span className="text-[9px] font-bold uppercase tracking-tight">ARIA</span>
-        </button>
       </div>
     )
   }
 
-  // ── Phase : Questions ───────────────────────────────────────────────────────
-  const question = quiz.questionsList[currentQ]
-  const progress = ((currentQ) / quiz.questionsList.length) * 100
+  // ── Phase : Questions ─────────────────────────────────────────────────────────
+  const question  = quiz.questions[currentQ]
+  const progress  = (currentQ / totalQuestions) * 100
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
@@ -182,11 +277,11 @@ export default function QuizPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <span className="text-sm text-[#7e7385]">
-            Question {currentQ + 1} / {quiz.questionsList.length}
+            Question {currentQ + 1} / {totalQuestions}
           </span>
-          <div className="flex items-center gap-2 text-sm text-[#8127cf] font-bold">
+          <div className={`flex items-center gap-2 text-sm font-bold ${timerColor}`}>
             <span className="material-symbols-outlined text-[18px]">timer</span>
-            {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+            {formatTime(timeLeft)}
           </div>
         </div>
 
@@ -204,18 +299,18 @@ export default function QuizPage() {
         {/* Card question */}
         <div className="bg-white rounded-2xl p-8 border border-[#8127cf]/10 shadow-sm mb-6">
           <h2 className="text-xl font-bold font-display text-[#0b1c30] mb-8">
-            {question.question}
+            {question.question_text}
           </h2>
 
           {/* Options */}
           <div className="space-y-3">
-            {question.options.map((option, i) => (
+            {question.answers?.map((answer, i) => (
               <button
-                key={i}
-                onClick={() => handleAnswer(i)}
+                key={answer.id}
+                onClick={() => handleAnswer(answer.id)}
                 className={`w-full text-left px-6 py-4 rounded-xl border-2 text-sm
                             font-medium transition-all
-                            ${selected === i
+                            ${selected === answer.id
                               ? 'border-[#8127cf] bg-[#f0dbff] text-[#8127cf]'
                               : 'border-[#f0f0f5] bg-white text-[#4d4354] hover:border-[#8127cf]/30 hover:bg-[#f0dbff]/20'
                             }`}
@@ -223,12 +318,12 @@ export default function QuizPage() {
                 <div className="flex items-center gap-4">
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center
                                    text-sm font-bold flex-shrink-0 border-2
-                                   ${selected === i
+                                   ${selected === answer.id
                                      ? 'border-[#8127cf] bg-[#8127cf] text-white'
                                      : 'border-[#cfc2d6] text-[#7e7385]'}`}>
                     {String.fromCharCode(65 + i)}
                   </span>
-                  {option}
+                  {answer.answer_text}
                 </div>
               </button>
             ))}
@@ -243,22 +338,13 @@ export default function QuizPage() {
                      active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
         >
-          {currentQ + 1 >= quiz.questionsList.length ? 'Terminer le quiz' : 'Question suivante'}
+          {currentQ + 1 >= totalQuestions ? 'Terminer le quiz' : 'Question suivante'}
           <span className="material-symbols-outlined text-[18px] ml-2 align-middle">
             arrow_forward
           </span>
         </button>
 
       </div>
-
-      {/* ARIA FAB */}
-      <button className="fixed bottom-8 right-8 w-16 h-16 rounded-full text-white
-                         shadow-lg flex flex-col items-center justify-center
-                         hover:scale-110 active:scale-95 transition-all z-50"
-              style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}>
-        <span className="material-symbols-outlined text-[24px]">chat_bubble</span>
-        <span className="text-[9px] font-bold uppercase tracking-tight">ARIA</span>
-      </button>
     </div>
   )
 }
