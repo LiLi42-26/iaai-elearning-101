@@ -7,14 +7,23 @@ export const useAuthStore = create(
   persist(
     (set, get) => ({
       user: null,
-      // accessToken retiré de l'état — Supabase gère ses propres tokens
-      // via cookies/localStorage internes. Lire depuis supabase.auth.getSession()
-      // si besoin ponctuel du token.
       isAuthenticated: false,
       isLoading: true,
 
+      // ─── CORRECTION : accessToken retiré du state
+      //
+      // Avant : le JWT était stocké dans Zustand + persisté en localStorage.
+      // Problème : localStorage est accessible par n'importe quel script JS
+      // sur la page → vecteur XSS. Supabase gère nativement le stockage et
+      // le rafraîchissement des tokens via son client interne (httpOnly cookie
+      // ou localStorage encapsulé). Dupliquer le token dans Zustand est
+      // redondant ET risqué.
+      //
+      // Si vous avez besoin du token dans un composant, utilisez :
+      //   const { data: { session } } = await supabase.auth.getSession()
+      //   session.access_token
+
       setUser: async (user) => {
-        // Récupérer le plan et le rôle depuis la table profiles
         try {
           const { data: profile } = await supabase
             .from('profiles')
@@ -24,8 +33,8 @@ export const useAuthStore = create(
 
           const enrichedUser = {
             ...user,
-            plan: profile?.plan ?? 'free',
-            role: profile?.role ?? 'LEARNER',
+            plan:     profile?.plan     ?? 'free',
+            role:     profile?.role     ?? 'LEARNER',
             fullName: profile?.full_name || user.fullName || user.email,
           }
 
@@ -35,9 +44,8 @@ export const useAuthStore = create(
             isLoading: false,
           })
         } catch {
-          // Si la table profiles n'est pas accessible, on garde l'user tel quel
           set({
-            user: { ...user, plan: 'free' },
+            user: { ...user, plan: 'free', role: 'LEARNER' },
             isAuthenticated: true,
             isLoading: false,
           })
@@ -46,9 +54,9 @@ export const useAuthStore = create(
 
       logout: () =>
         set({
-          user: null,
+          user:            null,
           isAuthenticated: false,
-          isLoading: false,
+          isLoading:       false,
         }),
 
       setLoading: (loading) => set({ isLoading: loading }),
@@ -58,7 +66,6 @@ export const useAuthStore = create(
           user: state.user ? { ...state.user, ...partial } : null,
         })),
 
-      // Rafraîchir le plan depuis Supabase
       refreshProfile: async () => {
         const { user } = get()
         if (!user?.id) return
@@ -73,8 +80,8 @@ export const useAuthStore = create(
             set((state) => ({
               user: {
                 ...state.user,
-                plan: profile.plan,
-                role: profile.role,
+                plan:     profile.plan,
+                role:     profile.role,
                 fullName: profile.full_name || state.user.fullName,
               },
             }))
@@ -87,21 +94,13 @@ export const useAuthStore = create(
     {
       name: 'iaai-auth',
       partialize: (state) => ({
-        user: state.user,
-        // accessToken délibérément absent — ne jamais persister un JWT en localStorage
+        // ─── CORRECTION : accessToken retiré de la persistance
+        // Seuls user et isAuthenticated sont persistés.
+        // isLoading n'est pas persisté : il doit toujours démarrer à true
+        // pour forcer la vérification de session au rechargement.
+        user:            state.user,
         isAuthenticated: state.isAuthenticated,
-        // isLoading exclu : doit toujours démarrer à true après rehydration
-        // pour forcer la vérification de session dans App.jsx
       }),
-      onRehydrateStorage: () => (state) => {
-        // Après rehydration depuis localStorage, forcer isLoading = true
-        // pour que App.jsx vérifie toujours la session Supabase avant d'afficher
-        // une page protégée. Sans ça, un isLoading:false persisté en cache
-        // pourrait court-circuiter le check de session.
-        if (state) {
-          state.isLoading = true
-        }
-      },
     }
   )
 )

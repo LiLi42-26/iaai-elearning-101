@@ -12,7 +12,7 @@ export async function getQuizByModule(moduleId) {
         id,
         question_text,
         order_index,
-        answers (id, answer_text, is_correct)
+        answers (id, answer_text)
       )
     `)
     .eq('module_id', moduleId)

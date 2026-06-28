@@ -47,6 +47,10 @@ export default function QuizPage() {
   // Refs pour capturer les valeurs courantes dans le timer (évite le stale closure)
   const answersRef                = useRef([])
   const selectedRef               = useRef(null)
+  // Guard anti-double soumission : le timer et handleNext peuvent appeler
+  // handleFinish quasi-simultanément (ex : timer expire pendant le clic "Terminer").
+  // Ce ref bloque toute soumission supplémentaire une fois la première lancée.
+  const isSubmittingRef           = useRef(false)
 
   // ── Charger le quiz du module ───────────────────────────────────────────────
   useEffect(() => {
@@ -113,6 +117,10 @@ export default function QuizPage() {
   }
 
   const handleFinish = async (finalAnswers) => {
+    // Bloquer toute soumission simultanée (timer + clic "Terminer" en même temps)
+    if (isSubmittingRef.current) return
+    isSubmittingRef.current = true
+
     clearInterval(timerRef.current)
     setPhase('submitting')
 
@@ -141,6 +149,8 @@ export default function QuizPage() {
       })
     } catch (err) {
       console.error('Erreur soumission quiz:', err)
+      // Réinitialiser le guard pour permettre une nouvelle tentative
+      isSubmittingRef.current = false
       setPhase('questions')
     }
   }

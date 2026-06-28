@@ -44,6 +44,7 @@ export const ROUTES = {
   SETTINGS: '/settings',
   SUBSCRIPTION: '/subscription',
   UPGRADE: '/subscription',   // ← alias pour les liens "Passer à Premium"
+  PAYMENT_SUCCESS: '/payment/success',
 
   // Admin
   ADMIN: '/admin',

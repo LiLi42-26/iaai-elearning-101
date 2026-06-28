@@ -1,0 +1,18 @@
+# supabase/config.toml
+# Configuration du projet Supabase IAAI eLearning 101
+
+[project]
+project_id = "jabcimevpdmdgzezhdgn"
+
+# ── Edge Functions ─────────────────────────────────────────────────────────────
+# stripe-checkout : gère elle-même l'auth via JWT → désactiver la vérification auto
+[functions.stripe-checkout]
+verify_jwt = false
+
+# stripe-webhook : reçoit des appels depuis Stripe (pas de JWT) → désactiver
+[functions.stripe-webhook]
+verify_jwt = false
+
+# aria : vérification JWT activée (les utilisateurs doivent être connectés)
+[functions.aria]
+verify_jwt = true

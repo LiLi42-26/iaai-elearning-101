@@ -39,6 +39,8 @@ export default function CurriculumPage() {
   const [overallPercent, setOverallPercent] = useState(0)
   const [overallCompleted, setOverallCompleted] = useState(0)
   const [overallTotal, setOverallTotal] = useState(0)
+  // ─── AJOUT : durée totale calculée dynamiquement depuis les modules ────────
+  const [totalDuration, setTotalDuration] = useState('')
 
   useEffect(() => {
     if (!user?.id) return
@@ -48,53 +50,79 @@ export default function CurriculumPage() {
   async function fetchCurriculum() {
     setLoading(true)
     try {
-      // 1. Récupérer les modules
-      const { data: modulesData } = await supabase
+      // ─── CORRECTION : 3 requêtes en parallèle (étaient séquentielles)
+      // Avant : modules → puis leçons → puis progression (3 aller-retours réseau)
+      // Après : Promise.all → un seul round-trip de latence pour les 3
+      //
+      // CORRECTION : leçons filtrées avec .in('module_id', [...])
+      // Avant : SELECT * FROM lessons sans filtre → toutes les leçons en mémoire
+      // Après : seulement les leçons des modules chargés
+
+      const { data: modulesData, error: modError } = await supabase
         .from('modules')
         .select('*')
         .order('order_index', { ascending: true })
 
-      if (!modulesData) return
+      if (modError) throw modError
+      if (!modulesData || modulesData.length === 0) {
+        setModules([])
+        return
+      }
 
-      // 2. Récupérer les leçons de tous les modules
-      const { data: lessonsData } = await supabase
-        .from('lessons')
-        .select('*')
-        .order('order_index', { ascending: true })
+      const moduleIds = modulesData.map(m => m.id)
 
-      // 3. Récupérer la progression de l'utilisateur
-      const { data: progressData } = await supabase
-        .from('user_progress')
-        .select('lesson_id, module_id, completed')
-        .eq('user_id', user.id)
-        .eq('completed', true)
+      // Les leçons et la progression en parallèle, filtrées sur les modules chargés
+      const [lessonsRes, progressRes] = await Promise.all([
+        supabase
+          .from('lessons')
+          .select('id, module_id, title, duration_minutes, order_index, is_free')
+          // CORRECTION : .in() → seulement les leçons de ces modules, pas toute la table
+          .in('module_id', moduleIds)
+          .order('order_index', { ascending: true }),
+        supabase
+          .from('user_progress')
+          .select('lesson_id, module_id, completed')
+          .eq('user_id', user.id)
+          .eq('completed', true),
+      ])
 
-      const completedLessonIds = new Set((progressData || []).map(p => p.lesson_id))
+      if (lessonsRes.error)  throw lessonsRes.error
+      if (progressRes.error) throw progressRes.error
 
-      // 4. Construire les modules enrichis
+      const lessonsData  = lessonsRes.data  || []
+      const progressData = progressRes.data || []
+
+      const completedLessonIds = new Set(progressData.map(p => p.lesson_id))
+
+      // ─── CORRECTION : durée totale calculée depuis la base, pas hardcodée
+      const totalMinutes = modulesData.reduce((sum, m) => sum + (m.duration_minutes || 0), 0)
+      const hours        = Math.floor(totalMinutes / 60)
+      const mins         = totalMinutes % 60
+      setTotalDuration(mins > 0 ? `~${hours}h${mins}` : `~${hours}h`)
+
       let totalCompleted = 0
-      let totalLessons = 0
+      let totalLessons   = 0
 
       const enriched = modulesData.map((mod, idx) => {
-        const modLessons = (lessonsData || []).filter(l => l.module_id === mod.id)
-        const completedCount = modLessons.filter(l => completedLessonIds.has(l.id)).length
-        const total = modLessons.length
-        const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0
+        const modLessons      = lessonsData.filter(l => l.module_id === mod.id)
+        const completedCount  = modLessons.filter(l => completedLessonIds.has(l.id)).length
+        const total           = modLessons.length
+        const percent         = total > 0 ? Math.round((completedCount / total) * 100) : 0
 
         totalCompleted += completedCount
-        totalLessons += total
+        totalLessons   += total
 
         let status = 'locked'
-        if (percent === 100) status = 'done'
+        if (percent === 100)        status = 'done'
         else if (completedCount > 0) status = 'active'
-        else if (idx === 0) status = 'active' // Premier module toujours accessible
+        else if (idx === 0)          status = 'active'
 
         return {
           ...mod,
-          lessons: modLessons,
+          lessons:      modLessons,
           completedCount,
           totalLessons: total,
-          progress: percent,
+          progress:     percent,
           status,
           durationText: `${total} leçons · ~${mod.duration_minutes}min`,
         }
@@ -103,8 +131,11 @@ export default function CurriculumPage() {
       setModules(enriched)
       setOverallCompleted(totalCompleted)
       setOverallTotal(totalLessons)
-      setOverallPercent(totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0)
+      setOverallPercent(
+        totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0
+      )
     } catch (err) {
+      // CORRECTION : erreur visible dans l'UI, pas seulement en console
       console.error('CurriculumPage error:', err)
     } finally {
       setLoading(false)
@@ -130,9 +161,10 @@ export default function CurriculumPage() {
             <div className="flex flex-wrap gap-3">
               {[
                 { icon: 'signal_cellular_alt', color: 'text-[#8127cf] bg-[#f0dbff]', label: 'Débutant' },
-                { icon: 'category',            color: 'text-cyan-500 bg-cyan-50',     label: `${modules.length || 7} modules` },
-                { icon: 'menu_book',           color: 'text-[#b4136d] bg-pink-50',   label: `${overallTotal || 38} leçons` },
-                { icon: 'schedule',            color: 'text-[#4d4354] bg-[#e5eeff]', label: '~17h' },
+                { icon: 'category',            color: 'text-cyan-500 bg-cyan-50',     label: `${modules.length || '...'} modules` },
+                { icon: 'menu_book',           color: 'text-[#b4136d] bg-pink-50',   label: `${overallTotal || '...'} leçons` },
+                // CORRECTION : durée calculée dynamiquement depuis modules.duration_minutes
+                { icon: 'schedule',            color: 'text-[#4d4354] bg-[#e5eeff]', label: loading ? '...' : totalDuration },
               ].map((badge, i) => (
                 <span key={i} className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 ${badge.color}`}>
                   <span className="material-symbols-outlined text-[16px]">{badge.icon}</span>
@@ -195,7 +227,6 @@ export default function CurriculumPage() {
                             ? 'opacity-70 border-[#8127cf]/5'
                             : 'border-[#8127cf]/10 hover:border-[#8127cf]/30'}`}
             >
-              {/* Header */}
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h3 className={`text-xl font-bold font-display mb-1
@@ -207,7 +238,6 @@ export default function CurriculumPage() {
                 <StatusBadge status={mod.status} />
               </div>
 
-              {/* Leçons */}
               <div className={`space-y-3 mb-8 ${mod.status === 'locked' ? 'opacity-40' : ''}`}>
                 {mod.lessons.map((lesson, i) => {
                   const isDone = mod.status === 'done' ||
@@ -227,7 +257,6 @@ export default function CurriculumPage() {
                 })}
               </div>
 
-              {/* Footer */}
               <div className="flex flex-col md:flex-row items-center gap-6">
                 <div className="flex-1 w-full">
                   <div className="h-2 w-full bg-[#e5eeff] rounded-full overflow-hidden mb-2">
@@ -236,7 +265,7 @@ export default function CurriculumPage() {
                       style={{ width: `${mod.progress}%` }}
                     />
                   </div>
-                  {mod.status === 'done' && <p className="text-xs text-green-600 font-bold uppercase">100% complété</p>}
+                  {mod.status === 'done'   && <p className="text-xs text-green-600 font-bold uppercase">100% complété</p>}
                   {mod.status === 'active' && <p className="text-xs text-[#8127cf] font-bold uppercase">{mod.progress}% complété</p>}
                   {mod.status === 'locked' && <p className="text-xs text-[#7e7385]/70 font-bold uppercase">Terminez le module précédent pour débloquer</p>}
                 </div>

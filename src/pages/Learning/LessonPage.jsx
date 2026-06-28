@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/authStore'
 import { getLessonById, getLessonsByModule } from '@/services/courseService'
 import { markLessonComplete, getProgressByModule } from '@/services/progressService'
 import { supabase } from '@/services/supabaseClient'
-
+import VideoPlayer from '@/components/ui/VideoPlayer'
 // ─── Skeleton loader ─────────────────────────────────────────────────────────
 function LessonSkeleton() {
   return (
@@ -31,43 +31,43 @@ function LessonSkeleton() {
 }
 
 // ─── Composant VideoPlayer YouTube ───────────────────────────────────────────
-function VideoPlayer({ videoUrl }) {
-  // Extraire l'ID YouTube depuis l'URL
-  const getYoutubeId = (url) => {
-    if (!url) return null
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)
-    return match ? match[1] : null
-  }
+// function VideoPlayer({ videoUrl }) {
+//   // Extraire l'ID YouTube depuis l'URL
+//   const getYoutubeId = (url) => {
+//     if (!url) return null
+//     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)
+//     return match ? match[1] : null
+//   }
 
-  const videoId = getYoutubeId(videoUrl)
+//   const videoId = getYoutubeId(videoUrl)
 
-  if (!videoId) {
-    return (
-      <div className="relative w-full aspect-video bg-[#0d0d0d] rounded-2xl
-                      overflow-hidden shadow-xl border border-white/10
-                      flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <span className="material-symbols-outlined text-[80px] text-white/20">
-            play_circle
-          </span>
-          <p className="text-white/40 text-sm">Vidéo bientôt disponible</p>
-        </div>
-      </div>
-    )
-  }
+//   if (!videoId) {
+//     return (
+//       <div className="relative w-full aspect-video bg-[#0d0d0d] rounded-2xl
+//                       overflow-hidden shadow-xl border border-white/10
+//                       flex items-center justify-center">
+//         <div className="text-center space-y-4">
+//           <span className="material-symbols-outlined text-[80px] text-white/20">
+//             play_circle
+//           </span>
+//           <p className="text-white/40 text-sm">Vidéo bientôt disponible</p>
+//         </div>
+//       </div>
+//     )
+//   }
 
-  return (
-    <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-xl border border-white/10">
-      <iframe
-        className="w-full h-full"
-        src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
-        title="Leçon vidéo"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
-    </div>
-  )
-}
+//   return (
+//     <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-xl border border-white/10">
+//       <iframe
+//         className="w-full h-full"
+//         src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+//         title="Leçon vidéo"
+//         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+//         allowFullScreen
+//       />
+//     </div>
+//   )
+// }
 
 // ─── Composant Notes (markdown simplifié) ────────────────────────────────────
 function LessonNotes({ notes }) {
@@ -281,7 +281,12 @@ export default function LessonPage() {
           </div>
 
           {/* Lecteur vidéo */}
-          <VideoPlayer videoUrl={lesson.video_url} />
+          {/* <VideoPlayer videoUrl={lesson.video_url}/> */}
+          <VideoPlayer
+           src={lesson.video_url}
+           title={lesson.title}
+           onComplete={handleComplete}
+           />
 
           {/* Bouton Marquer comme complétée */}
           <div className="flex items-center gap-4">

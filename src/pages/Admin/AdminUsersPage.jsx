@@ -1,17 +1,51 @@
 // src/pages/Admin/AdminUsersPage.jsx
-import { useState } from 'react'
+// But : permettre à l'admin de consulter, filtrer et gérer tous les utilisateurs.
+// Données réelles depuis Supabase : profiles + user_progress + quiz_attempts.
 
-// ─── Données mockées ──────────────────────────────────────────────────────────
-const usersData = [
-  { id: 1, name: 'Yasmine Bennani',  email: 'y.bennani@mail.ma',    plan: 'Illimité', progress: 75, status: 'Actif',     joined: '15 jan. 2026', initials: 'YB', grad: 'from-cyan-400 to-blue-500',      quizzes: 6, lastSeen: 'Il y a 2h'   },
-  { id: 2, name: 'Omar Khalil',      email: 'o.khalil@gmail.com',   plan: 'Gratuit',  progress: 40, status: 'Actif',     joined: '22 jan. 2026', initials: 'OK', grad: 'from-green-400 to-teal-500',     quizzes: 3, lastSeen: 'Il y a 5h'   },
-  { id: 3, name: 'Fatima Zahra',     email: 'f.zahra@outlook.com',  plan: 'Illimité', progress: 90, status: 'Actif',     joined: '03 fév. 2026', initials: 'FZ', grad: 'from-yellow-400 to-orange-500',  quizzes: 7, lastSeen: 'Hier'         },
-  { id: 4, name: 'Mehdi Alaoui',     email: 'm.alaoui@mail.ma',     plan: 'Gratuit',  progress: 20, status: 'Inactif',   joined: '10 fév. 2026', initials: 'MA', grad: 'from-violet-400 to-purple-600',  quizzes: 1, lastSeen: 'Il y a 8j'   },
-  { id: 5, name: 'Nour El Houda',    email: 'n.elhouda@mail.ma',    plan: 'Illimité', progress: 60, status: 'Actif',     joined: '18 fév. 2026', initials: 'NH', grad: 'from-pink-400 to-rose-500',      quizzes: 5, lastSeen: 'Il y a 1j'   },
-  { id: 6, name: 'Karim Saidi',      email: 'k.saidi@gmail.com',    plan: 'Gratuit',  progress: 10, status: 'En attente',joined: '01 mar. 2026', initials: 'KS', grad: 'from-red-400 to-orange-400',     quizzes: 0, lastSeen: 'Il y a 15j'  },
-  { id: 7, name: 'Aya Mansouri',     email: 'a.mansouri@mail.ma',   plan: 'Illimité', progress: 55, status: 'Actif',     joined: '12 mar. 2026', initials: 'AM', grad: 'from-blue-400 to-indigo-500',    quizzes: 4, lastSeen: 'Il y a 3h'   },
-  { id: 8, name: 'Hamza Berrada',    email: 'h.berrada@outlook.com',plan: 'Gratuit',  progress: 30, status: 'Actif',     joined: '20 mar. 2026', initials: 'HB', grad: 'from-teal-400 to-cyan-500',      quizzes: 2, lastSeen: 'Il y a 12h'  },
+import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '@/services/supabaseClient'
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const AVATAR_GRADS = [
+  'from-cyan-400 to-blue-500',    'from-green-400 to-teal-500',
+  'from-yellow-400 to-orange-500','from-violet-400 to-purple-600',
+  'from-pink-400 to-rose-500',    'from-red-400 to-orange-400',
+  'from-blue-400 to-indigo-500',  'from-teal-400 to-cyan-500',
 ]
+
+function getInitials(name = '', email = '') {
+  const src = name.trim() || email
+  const parts = src.split(' ')
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return src.slice(0, 2).toUpperCase()
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—'
+  return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '—'
+  const diff  = Date.now() - new Date(dateStr).getTime()
+  const mins  = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days  = Math.floor(diff / 86400000)
+  if (mins  < 1)  return 'À l\'instant'
+  if (mins  < 60) return `Il y a ${mins}min`
+  if (hours < 24) return `Il y a ${hours}h`
+  if (days === 1) return 'Hier'
+  return `Il y a ${days}j`
+}
+
+// ─── Statut déduit depuis last_seen_at ────────────────────────────────────────
+function getStatus(lastSeenAt) {
+  if (!lastSeenAt) return 'En attente'
+  const days = (Date.now() - new Date(lastSeenAt).getTime()) / 86400000
+  if (days <= 3)  return 'Actif'
+  if (days <= 14) return 'Inactif'
+  return 'Inactif'
+}
 
 const statusColors = {
   'Actif':      'bg-green-100 text-green-700',
@@ -19,56 +53,221 @@ const statusColors = {
   'En attente': 'bg-yellow-100 text-yellow-700',
 }
 
+// ─── Skeleton ligne tableau ───────────────────────────────────────────────────
+function TableRowSkeleton() {
+  return (
+    <tr className="animate-pulse">
+      <td className="px-4 py-3.5"><div className="w-4 h-4 bg-slate-200 rounded" /></td>
+      <td className="px-4 py-3.5">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
+          <div className="space-y-1.5">
+            <div className="h-3 w-32 bg-slate-200 rounded" />
+            <div className="h-2.5 w-24 bg-slate-100 rounded" />
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3.5"><div className="h-5 w-16 bg-slate-100 rounded-full" /></td>
+      <td className="px-4 py-3.5"><div className="h-3 w-24 bg-slate-100 rounded-full" /></td>
+      <td className="px-4 py-3.5"><div className="h-5 w-16 bg-slate-100 rounded-full" /></td>
+      <td className="px-4 py-3.5"><div className="h-3 w-20 bg-slate-100 rounded" /></td>
+      <td className="px-4 py-3.5"><div className="h-3 w-16 bg-slate-100 rounded" /></td>
+      <td className="px-4 py-3.5"><div className="h-6 w-16 bg-slate-100 rounded-lg" /></td>
+    </tr>
+  )
+}
+
+const PAGE_SIZE = 10
+
 export default function AdminUsersPage() {
-  const [search, setSearch] = useState('')
-  const [filterPlan, setFilterPlan] = useState('Tous')
+  const [users,        setUsers]        = useState([])
+  const [totalCount,   setTotalCount]   = useState(0)
+  const [loading,      setLoading]      = useState(true)
+  const [error,        setError]        = useState(null)
+
+  const [search,       setSearch]       = useState('')
+  const [filterPlan,   setFilterPlan]   = useState('Tous')
   const [filterStatus, setFilterStatus] = useState('Tous')
-  const [selected, setSelected] = useState([])
-  const [viewUser, setViewUser] = useState(null)
+  const [page,         setPage]         = useState(1)
 
-  const filtered = usersData.filter(u => {
-    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
-    const matchPlan = filterPlan === 'Tous' || u.plan === filterPlan
-    const matchStatus = filterStatus === 'Tous' || u.status === filterStatus
-    return matchSearch && matchPlan && matchStatus
-  })
+  const [selected,     setSelected]     = useState([])
+  const [viewUser,     setViewUser]     = useState(null)
 
+  // ── Charger les utilisateurs ──────────────────────────────────────────────
+  const fetchUsers = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      // 1. Profiles avec pagination
+      let query = supabase
+        .from('profiles')
+        .select('id, full_name, email, plan, role, created_at, updated_at', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
+
+      if (filterPlan !== 'Tous') {
+        query = query.eq('plan', filterPlan === 'Illimité' ? 'premium' : 'free')
+      }
+      if (search) {
+        query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`)
+      }
+
+      const { data: profiles, count, error: e1 } = await query
+      if (e1) throw e1
+      setTotalCount(count ?? 0)
+
+      if (!profiles || profiles.length === 0) {
+        setUsers([])
+        return
+      }
+
+      const ids = profiles.map(p => p.id)
+
+      // 2. Progression : leçons complétées par user
+      const { data: progressRows } = await supabase
+        .from('user_progress')
+        .select('user_id, completed, updated_at')
+        .in('user_id', ids)
+
+      // 3. Total leçons pour calculer le %
+      const { data: allLessons } = await supabase
+        .from('lessons')
+        .select('id')
+
+      const totalLessons = (allLessons || []).length || 1
+
+      // 4. Quiz complétés par user
+      const { data: quizRows } = await supabase
+        .from('quiz_attempts')
+        .select('user_id')
+        .in('user_id', ids)
+
+      // ── Agréger par user_id ────────────────────────────────────────────────
+      const completedByUser  = {}
+      const lastSeenByUser   = {}
+      ;(progressRows || []).forEach(p => {
+        if (p.completed) {
+          completedByUser[p.user_id] = (completedByUser[p.user_id] || 0) + 1
+        }
+        // Garder la date la plus récente comme dernière activité
+        const prev = lastSeenByUser[p.user_id]
+        if (!prev || new Date(p.updated_at) > new Date(prev)) {
+          lastSeenByUser[p.user_id] = p.updated_at
+        }
+      })
+
+      const quizzesByUser = {}
+      ;(quizRows || []).forEach(q => {
+        quizzesByUser[q.user_id] = (quizzesByUser[q.user_id] || 0) + 1
+      })
+
+      // ── Enrichir chaque profil ────────────────────────────────────────────
+      const enriched = profiles.map((p, idx) => {
+        const lastSeen   = lastSeenByUser[p.id] || null
+        const completed  = completedByUser[p.id] || 0
+        const progress   = Math.round((completed / totalLessons) * 100)
+        const quizzes    = quizzesByUser[p.id] || 0
+        const status     = getStatus(lastSeen)
+        return {
+          ...p,
+          initials:  getInitials(p.full_name, p.email),
+          grad:      AVATAR_GRADS[idx % AVATAR_GRADS.length],
+          progress,
+          quizzes,
+          status,
+          planLabel: p.plan === 'premium' ? 'Illimité' : 'Gratuit',
+          joinedFmt: formatDate(p.created_at),
+          lastSeen:  timeAgo(lastSeen),
+          lastSeenRaw: lastSeen,
+        }
+      })
+
+      // Filtre statut côté client (pas de colonne status en DB)
+      const finalUsers = filterStatus === 'Tous'
+        ? enriched
+        : enriched.filter(u => u.status === filterStatus)
+
+      setUsers(finalUsers)
+    } catch (err) {
+      console.error('[AdminUsersPage]', err)
+      setError('Impossible de charger les utilisateurs.')
+    } finally {
+      setLoading(false)
+    }
+  }, [page, filterPlan, filterStatus, search])
+
+  useEffect(() => {
+    const timer = setTimeout(fetchUsers, search ? 400 : 0) // debounce search
+    return () => clearTimeout(timer)
+  }, [fetchUsers])
+
+  // ── Sélection ─────────────────────────────────────────────────────────────
   const toggleSelect = id => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
-  const allSelected = filtered.length > 0 && filtered.every(u => selected.includes(u.id))
-  const toggleAll = () => setSelected(allSelected ? [] : filtered.map(u => u.id))
+  const allSelected  = users.length > 0 && users.every(u => selected.includes(u.id))
+  const toggleAll    = () => setSelected(allSelected ? [] : users.map(u => u.id))
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   return (
     <div className="min-h-screen pb-12">
 
-      {/* ── Header ───────────────────────────────────────────────────────────── */}
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold font-display text-violet-950">Utilisateurs</h1>
-          <p className="text-slate-500 mt-1">{usersData.length} membres inscrits sur la plateforme</p>
+          <p className="text-slate-500 mt-1">
+            {loading ? '…' : `${totalCount} membre${totalCount !== 1 ? 's' : ''} inscrits sur la plateforme`}
+          </p>
         </div>
-        <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-700 text-white text-sm font-semibold hover:bg-violet-800 transition-colors">
-          <span className="material-symbols-outlined text-[18px]">person_add</span>
-          Inviter un utilisateur
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchUsers}
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-sm hover:bg-slate-50 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[16px]">refresh</span>
+            Actualiser
+          </button>
+          <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-700 text-white text-sm font-semibold hover:bg-violet-800 transition-colors">
+            <span className="material-symbols-outlined text-[18px]">person_add</span>
+            Inviter
+          </button>
+        </div>
       </div>
 
-      {/* ── Filtres ───────────────────────────────────────────────────────────── */}
+      {/* ── Erreur ─────────────────────────────────────────────────────────── */}
+      {error && (
+        <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+          <span className="material-symbols-outlined text-red-500 text-[20px]">error</span>
+          <p className="text-sm text-red-700">{error}</p>
+          <button onClick={fetchUsers} className="ml-auto text-xs text-red-600 font-medium hover:underline">Réessayer</button>
+        </div>
+      )}
+
+      {/* ── Filtres ────────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-5 flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px]">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
           <input
             value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Rechercher un utilisateur..."
+            onChange={e => { setSearch(e.target.value); setPage(1) }}
+            placeholder="Rechercher par nom ou email..."
             className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
           />
         </div>
-        <select value={filterPlan} onChange={e => setFilterPlan(e.target.value)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-violet-400">
+        <select
+          value={filterPlan}
+          onChange={e => { setFilterPlan(e.target.value); setPage(1) }}
+          className="px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-violet-400"
+        >
           <option>Tous</option>
           <option>Gratuit</option>
           <option>Illimité</option>
         </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-violet-400">
+        <select
+          value={filterStatus}
+          onChange={e => { setFilterStatus(e.target.value); setPage(1) }}
+          className="px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-violet-400"
+        >
           <option>Tous</option>
           <option>Actif</option>
           <option>Inactif</option>
@@ -82,95 +281,120 @@ export default function AdminUsersPage() {
         )}
       </div>
 
-      {/* ── Tableau ───────────────────────────────────────────────────────────── */}
+      {/* ── Tableau ────────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="px-4 py-3 text-left">
-                <input type="checkbox" checked={allSelected} onChange={toggleAll} className="rounded border-slate-300 text-violet-600 focus:ring-violet-400" />
-              </th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">Utilisateur</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">Plan</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">Progression</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">Statut</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">Inscrit le</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">Dernière activité</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {filtered.map(u => (
-              <tr key={u.id} className={`hover:bg-slate-50 transition-colors ${selected.includes(u.id) ? 'bg-violet-50' : ''}`}>
-                <td className="px-4 py-3.5">
-                  <input type="checkbox" checked={selected.includes(u.id)} onChange={() => toggleSelect(u.id)} className="rounded border-slate-300 text-violet-600 focus:ring-violet-400" />
-                </td>
-                <td className="px-4 py-3.5">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${u.grad} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-                      {u.initials}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-slate-800">{u.name}</p>
-                      <p className="text-xs text-slate-400">{u.email}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3.5">
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${u.plan === 'Illimité' ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-600'}`}>
-                    {u.plan}
-                  </span>
-                </td>
-                <td className="px-4 py-3.5">
-                  <div className="flex items-center gap-2">
-                    <div className="w-20 h-1.5 bg-slate-100 rounded-full">
-                      <div className="h-full rounded-full bg-violet-500" style={{ width: `${u.progress}%` }} />
-                    </div>
-                    <span className="text-xs font-medium text-slate-600">{u.progress}%</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3.5">
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColors[u.status]}`}>{u.status}</span>
-                </td>
-                <td className="px-4 py-3.5 text-xs text-slate-500">{u.joined}</td>
-                <td className="px-4 py-3.5 text-xs text-slate-500">{u.lastSeen}</td>
-                <td className="px-4 py-3.5">
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => setViewUser(u)} className="w-7 h-7 rounded-lg hover:bg-violet-100 flex items-center justify-center transition-colors">
-                      <span className="material-symbols-outlined text-[16px] text-violet-600">visibility</span>
-                    </button>
-                    <button className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center transition-colors">
-                      <span className="material-symbols-outlined text-[16px] text-slate-400">edit</span>
-                    </button>
-                    <button className="w-7 h-7 rounded-lg hover:bg-red-100 flex items-center justify-center transition-colors">
-                      <span className="material-symbols-outlined text-[16px] text-red-400">delete</span>
-                    </button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-4 py-3 text-left">
+                  <input type="checkbox" checked={allSelected} onChange={toggleAll} className="rounded border-slate-300 text-violet-600 focus:ring-violet-400" />
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600">Utilisateur</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600">Plan</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600">Progression</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600">Statut</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600">Inscrit le</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600">Dernière activité</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {loading
+                ? [1,2,3,4,5].map(i => <TableRowSkeleton key={i} />)
+                : users.length === 0
+                  ? (
+                    <tr>
+                      <td colSpan={8} className="py-16 text-center">
+                        <span className="material-symbols-outlined text-slate-300 text-[48px] mb-3 block">person_search</span>
+                        <p className="text-slate-400">Aucun utilisateur trouvé</p>
+                      </td>
+                    </tr>
+                  )
+                  : users.map(u => (
+                    <tr key={u.id} className={`hover:bg-slate-50 transition-colors ${selected.includes(u.id) ? 'bg-violet-50' : ''}`}>
+                      <td className="px-4 py-3.5">
+                        <input type="checkbox" checked={selected.includes(u.id)} onChange={() => toggleSelect(u.id)} className="rounded border-slate-300 text-violet-600 focus:ring-violet-400" />
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${u.grad} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+                            {u.initials}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-800">{u.full_name || '—'}</p>
+                            <p className="text-xs text-slate-400">{u.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${u.planLabel === 'Illimité' ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-600'}`}>
+                          {u.planLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 h-1.5 bg-slate-100 rounded-full">
+                            <div className="h-full rounded-full bg-violet-500" style={{ width: `${u.progress}%` }} />
+                          </div>
+                          <span className="text-xs font-medium text-slate-600">{u.progress}%</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColors[u.status]}`}>{u.status}</span>
+                      </td>
+                      <td className="px-4 py-3.5 text-xs text-slate-500">{u.joinedFmt}</td>
+                      <td className="px-4 py-3.5 text-xs text-slate-500">{u.lastSeen}</td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setViewUser(u)} className="w-7 h-7 rounded-lg hover:bg-violet-100 flex items-center justify-center transition-colors">
+                            <span className="material-symbols-outlined text-[16px] text-violet-600">visibility</span>
+                          </button>
+                          <button className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center transition-colors">
+                            <span className="material-symbols-outlined text-[16px] text-slate-400">edit</span>
+                          </button>
+                          <button className="w-7 h-7 rounded-lg hover:bg-red-100 flex items-center justify-center transition-colors">
+                            <span className="material-symbols-outlined text-[16px] text-red-400">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+              }
+            </tbody>
+          </table>
+        </div>
 
-        {filtered.length === 0 && (
-          <div className="py-16 text-center">
-            <span className="material-symbols-outlined text-slate-300 text-[48px] mb-3">person_search</span>
-            <p className="text-slate-400">Aucun utilisateur trouvé</p>
-          </div>
-        )}
-
-        {/* Pagination */}
+        {/* ── Pagination ───────────────────────────────────────────────────── */}
         <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
-          <span>{filtered.length} résultat(s)</span>
+          <span>
+            {loading ? '…' : `${users.length} affiché(s) sur ${totalCount}`}
+          </span>
           <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">←</button>
-            <span className="px-3 py-1.5 rounded-lg bg-violet-700 text-white font-medium">1</span>
-            <button className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">→</button>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1 || loading}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >←</button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(p => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${page === p ? 'bg-violet-700 text-white' : 'border border-slate-200 hover:bg-slate-50'}`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages || loading}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >→</button>
           </div>
         </div>
       </div>
 
-      {/* ── Modal détail utilisateur ─────────────────────────────────────────── */}
+      {/* ── Modal détail utilisateur ──────────────────────────────────────── */}
       {viewUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
@@ -180,22 +404,28 @@ export default function AdminUsersPage() {
                 <span className="material-symbols-outlined text-slate-400 text-[18px]">close</span>
               </button>
             </div>
+
             <div className="flex items-center gap-4 mb-6">
               <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${viewUser.grad} flex items-center justify-center text-white text-xl font-bold`}>
                 {viewUser.initials}
               </div>
               <div>
-                <p className="font-bold text-slate-800 text-lg">{viewUser.name}</p>
+                <p className="font-bold text-slate-800 text-lg">{viewUser.full_name || '—'}</p>
                 <p className="text-sm text-slate-400">{viewUser.email}</p>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full mt-1 inline-block ${statusColors[viewUser.status]}`}>{viewUser.status}</span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full mt-1 inline-block ${statusColors[viewUser.status]}`}>
+                  {viewUser.status}
+                </span>
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-3 mb-6">
               {[
-                { label: 'Plan',         value: viewUser.plan       },
-                { label: 'Progression',  value: `${viewUser.progress}%` },
-                { label: 'Quiz complétés',value: `${viewUser.quizzes}/7`},
-                { label: 'Inscrit le',   value: viewUser.joined     },
+                { label: 'Plan',            value: viewUser.planLabel },
+                { label: 'Progression',     value: `${viewUser.progress}%` },
+                { label: 'Quiz complétés',  value: viewUser.quizzes },
+                { label: 'Inscrit le',      value: viewUser.joinedFmt },
+                { label: 'Dernière activité', value: viewUser.lastSeen },
+                { label: 'Rôle',            value: viewUser.role || 'user' },
               ].map(d => (
                 <div key={d.label} className="bg-slate-50 rounded-xl p-3">
                   <p className="text-xs text-slate-400 mb-0.5">{d.label}</p>
@@ -203,6 +433,21 @@ export default function AdminUsersPage() {
                 </div>
               ))}
             </div>
+
+            {/* Barre de progression détaillée */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
+                <span>Progression du cours</span>
+                <span className="font-semibold text-violet-700">{viewUser.progress}%</span>
+              </div>
+              <div className="w-full h-2 bg-slate-100 rounded-full">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-violet-500 to-pink-500 transition-all"
+                  style={{ width: `${viewUser.progress}%` }}
+                />
+              </div>
+            </div>
+
             <div className="flex gap-3">
               <button onClick={() => setViewUser(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition-colors">
                 Fermer

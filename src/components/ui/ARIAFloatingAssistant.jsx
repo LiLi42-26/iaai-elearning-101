@@ -1,180 +1,232 @@
 // src/components/ui/ARIAFloatingAssistant.jsx
-import { useState, useRef, useEffect } from 'react'
+// Chatbot ARIA — connecté à l'Edge Function Gemini + pgvector RAG
 
-const suggestions = [
-  { label: '📜 Certifications ?',  text: 'Comment obtenir un certificat ?' },
-  { label: '🇲🇦 NLP Darija ?',    text: 'Y a-t-il du contenu en Darija ?' },
-  { label: '💎 Plan Illimité ?',   text: 'Que comprend le plan Illimité ?' },
-  { label: '🧠 C\'est quoi un LLM ?', text: 'Explique-moi ce qu\'est un LLM' },
-]
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { askARIA } from '@/services/ariaService'
 
-const getResponse = (input) => {
-  const t = input.toLowerCase()
-  if (t.includes('salam') || t.includes('bonjour') || t.includes('salut') || t.includes('hello'))
-    return "Salam ! 🌟 Je suis ARIA, votre assistante IA personnelle. Je suis là pour vous aider dans votre parcours d'apprentissage. Que voulez-vous explorer aujourd'hui ?"
-  if (t.includes('certificat') || t.includes('diplome'))
-    return "Pour obtenir votre certificat IAAI, vous devez compléter tous les modules et réussir les quiz avec un score ≥ 80%. Il sera partageable directement sur LinkedIn ! 🎓"
-  if (t.includes('darija') || t.includes('maroc'))
-    return "Nos contenus incluent des exemples contextualisés pour le Maroc. Un module spécial NLP Darija est prévu dans la roadmap 2026 ! 🇲🇦"
-  if (t.includes('illimité') || t.includes('prix') || t.includes('abonnement') || t.includes('payant'))
-    return "Le plan Illimité à 99 MAD/mois vous donne accès aux 7 modules, à ARIA sans limite, aux notebooks Python et au certificat officiel. Annulable à tout moment ✨"
-  if (t.includes('quiz'))
-    return "Chaque module se termine par un quiz de 5 à 10 questions. Vous avez besoin de 80% pour valider le module. Vous pouvez le recommencer autant de fois que nécessaire ! 💪"
-  if (t.includes('llm') || t.includes('gpt') || t.includes('modèle'))
-    return "Un LLM (Large Language Model) est un modèle d'IA entraîné sur d'énormes quantités de texte. Il peut générer, résumer et analyser du langage naturel. ChatGPT, Claude et Gemini sont des LLMs 🤖"
-  if (t.includes('module') || t.includes('cours'))
-    return "Votre parcours IAAI comprend 7 modules progressifs : des bases de l'IA jusqu'aux LLMs et à l'IA générative. Les modules 1 à 4 sont déjà disponibles ! 🚀"
-  return "Bonne question ! 🧠 Ce concept est couvert en profondeur dans votre parcours IAAI. Souhaitez-vous que je vous redirige vers la leçon correspondante ?"
+function generateSessionId() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+  })
 }
 
-export default function ARIAFloatingAssistant() {
-  const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      from: 'aria',
-      text: "Marhaban ! 🇲🇦 Je suis ARIA, votre assistante d'apprentissage IA. Comment puis-je vous aider aujourd'hui ?",
-      time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-    },
-  ])
-  const [input, setInput] = useState('')
-  const [typing, setTyping] = useState(false)
-  const bottomRef = useRef(null)
-  const inputRef = useRef(null)
+const SUGGESTIONS = [
+  { label: "🤖 C'est quoi l'IA ?",       text: "Qu'est-ce que l'intelligence artificielle ?" },
+  { label: '📜 Obtenir un certificat ?',  text: 'Comment obtenir un certificat ?' },
+  { label: '🧠 Différence IA / ML ?',     text: 'Quelle est la différence entre IA et ML ?' },
+  { label: '📊 Rôle des données ?',       text: 'Quel est le rôle des données dans l\'IA ?' },
+]
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, open])
+function SourceBadge({ source }) {
+  return (
+    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#f0dbff]/60
+                    border border-[#8127cf]/20 rounded-full text-xs text-[#8127cf]">
+      <span className="material-symbols-outlined text-[12px]">auto_stories</span>
+      <span className="font-medium truncate max-w-[130px]">Source {source.similarity}%</span>
+    </div>
+  )
+}
 
-  useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 100)
-  }, [open])
+function Message({ msg }) {
+  const isAria = msg.from === 'aria'
+  return (
+    <div className={`flex gap-2 ${isAria ? 'justify-start' : 'justify-end'}`}>
+      {isAria && (
+        <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center
+                        text-white text-xs font-bold"
+             style={{ background: 'linear-gradient(135deg, #ec4899, #8127cf)' }}>
+          AI
+        </div>
+      )}
+      <div className="max-w-[85%] space-y-1.5">
+        <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+          isAria
+            ? 'bg-[#f8f5ff] border border-[#e5d8f5] text-[#0b1c30] rounded-tl-sm'
+            : 'text-white rounded-tr-sm'
+        }`}
+        style={!isAria ? { background: 'linear-gradient(135deg, #ec4899, #8127cf)' } : {}}>
+          {msg.text || (msg.loading && <span className="opacity-60 animate-pulse">▍</span>)}
+        </div>
+        {msg.sources?.length > 0 && (
+          <div className="flex flex-wrap gap-1 px-1">
+            {msg.sources.map((s, i) => <SourceBadge key={i} source={s} />)}
+          </div>
+        )}
+        <p className="text-[10px] text-[#7e7385] px-1">{msg.time}</p>
+      </div>
+    </div>
+  )
+}
 
-  const send = (text) => {
-    const t = (text || input).trim()
-    if (!t) return
-    const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-    setMessages(prev => [...prev, { id: Date.now(), from: 'user', text: t, time: now }])
-    setInput('')
-    setTyping(true)
-    setTimeout(() => {
-      setTyping(false)
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        from: 'aria',
-        text: getResponse(t),
-        time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      }])
-    }, 1000 + Math.random() * 600)
+export default function ARIAFloatingAssistant({ lessonId = null, moduleId = null, lessonTitle = null, moduleTitle = null }) {
+  const [open, setOpen]         = useState(false)
+  const [messages, setMessages] = useState([{
+    id: 1, from: 'aria',
+    text: `Marhaban ! 🌟 Je suis ARIA, votre assistante pédagogique IA.\n${lessonTitle ? `Je suis contextualisée sur : "${lessonTitle}".` : 'Posez-moi vos questions sur le cours.'}`,
+    time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+  }])
+  const [input,     setInput]     = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [status,    setStatus]    = useState('')
+
+  const bottomRef  = useRef(null)
+  const inputRef   = useRef(null)
+  const historyRef = useRef([])
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, open])
+  useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 150) }, [open])
+
+  function now() {
+    return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
   }
 
-  const handleKey = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }
+  const send = useCallback(async (text) => {
+    const question = (text || input).trim()
+    if (!question || isLoading) return
+
+    setInput('')
+    setIsLoading(true)
+    setStatus('🔍 Recherche dans le cours…')
+
+    const userMsg = { id: Date.now(), from: 'user', text: question, time: now() }
+    setMessages(prev => [...prev, userMsg])
+
+    const ariaId  = Date.now() + 1
+    setMessages(prev => [...prev, {
+      id: ariaId, from: 'aria', text: '', loading: true, sources: [], time: now()
+    }])
+
+    historyRef.current = [
+      ...historyRef.current,
+      { role: 'user', content: question },
+    ].slice(-10)
+
+    const result = await askARIA({
+      question,
+      lessonId,
+      moduleId,
+      history: historyRef.current,
+    })
+
+    if (result.error) {
+      setMessages(prev => prev.map(m =>
+        m.id === ariaId ? { ...m, loading: false, text: `❌ ${result.error}` } : m
+      ))
+    } else {
+      setMessages(prev => prev.map(m =>
+        m.id === ariaId ? {
+          ...m,
+          loading: false,
+          text:    result.reponse,
+          sources: result.sources,
+        } : m
+      ))
+      historyRef.current = [
+        ...historyRef.current,
+        { role: 'assistant', content: result.reponse },
+      ].slice(-10)
+    }
+
+    setStatus('')
+    setIsLoading(false)
+  }, [input, isLoading, lessonId, moduleId])
+
+  const handleKey = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
+  }
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-
-      {/* Chat window */}
       {open && (
-        <div className="absolute bottom-20 right-0 w-[360px] h-[520px] bg-white rounded-3xl shadow-2xl
-                        border border-[#ded6f3] flex flex-col overflow-hidden
-                        animate-[fadeInUp_.2s_ease-out]">
+        <div className="absolute bottom-20 right-0 w-[370px] bg-white rounded-3xl shadow-2xl
+                        border border-[#ded6f3] flex flex-col overflow-hidden"
+             style={{ height: '540px' }}>
 
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 text-white shrink-0"
-               style={{ background: 'linear-gradient(135deg, #ec4899 0%, #8127cf 60%, #0891b2 100%)' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                <span className="material-symbols-outlined text-white text-[20px]">smart_toy</span>
+          <div className="px-5 py-4 border-b border-[#f0ebf8]"
+               style={{ background: 'linear-gradient(135deg, #8127cf 0%, #ec4899 100%)' }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center
+                                justify-center text-white font-bold text-sm">AI</div>
+                <div>
+                  <p className="text-white font-bold text-sm">ARIA</p>
+                  <p className="text-white/70 text-xs">
+                    {lessonTitle ? `Leçon : ${lessonTitle.slice(0, 25)}…` : 'Assistante pédagogique · RAG'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-bold leading-tight">ARIA</p>
-                <p className="text-[10px] text-white/80 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
-                  Assistante IA · En ligne
-                </p>
-              </div>
+              <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white">
+                <span className="material-symbols-outlined text-[22px]">close</span>
+              </button>
             </div>
-            <button onClick={() => setOpen(false)}
-                    className="w-8 h-8 rounded-xl hover:bg-white/20 flex items-center justify-center transition-colors">
-              <span className="material-symbols-outlined text-white text-[18px]">close</span>
-            </button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#f8f5ff]/40">
-            {messages.map(msg => (
-              <div key={msg.id} className={`flex flex-col ${msg.from === 'user' ? 'items-end' : 'items-start'}`}>
-                <div className={`max-w-[82%] px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-sm ${
-                  msg.from === 'user'
-                    ? 'text-white rounded-tr-none'
-                    : 'bg-white border border-[#ded6f3] text-[#17132f] rounded-tl-none'
-                }`} style={msg.from === 'user' ? { background: 'linear-gradient(135deg, #ec4899 0%, #8127cf 100%)' } : {}}>
-                  {msg.text}
-                </div>
-                <span className="text-[9px] text-[#68627a] mt-1 px-1">{msg.time}</span>
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            {messages.map(msg => <Message key={msg.id} msg={msg} />)}
+            {status && (
+              <div className="flex items-center gap-2 text-xs text-[#8127cf] px-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#8127cf] animate-pulse" />
+                {status}
               </div>
-            ))}
-
-            {/* Typing indicator */}
-            {typing && (
-              <div className="flex items-start">
-                <div className="bg-white border border-[#ded6f3] rounded-2xl rounded-tl-none px-4 py-3 flex items-center gap-1">
-                  {[0, 150, 300].map(d => (
-                    <span key={d} className="w-1.5 h-1.5 rounded-full bg-[#8127cf] animate-bounce"
-                          style={{ animationDelay: `${d}ms` }} />
-                  ))}
-                </div>
+            )}
+            {messages.length === 1 && !isLoading && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {SUGGESTIONS.map((s, i) => (
+                  <button key={i} onClick={() => send(s.text)}
+                          className="px-3 py-1.5 text-xs rounded-full border border-[#8127cf]/30
+                                     text-[#8127cf] hover:bg-[#f0dbff] transition-colors">
+                    {s.label}
+                  </button>
+                ))}
               </div>
             )}
             <div ref={bottomRef} />
           </div>
 
-          {/* Suggestions */}
-          <div className="px-3 py-2 border-t border-[#f0dbff]/50 flex gap-1.5 overflow-x-auto scrollbar-none shrink-0">
-            {suggestions.map(s => (
-              <button key={s.text} onClick={() => send(s.text)}
-                      className="text-[10px] whitespace-nowrap bg-white border border-[#ded6f3] hover:border-[#8127cf]/50
-                                 hover:bg-[#f0dbff]/50 text-[#8127cf] font-semibold px-2.5 py-1.5 rounded-full transition-all">
-                {s.label}
-              </button>
-            ))}
-          </div>
-
           {/* Input */}
-          <div className="p-3 border-t border-[#ded6f3] bg-white flex items-center gap-2 shrink-0">
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKey}
-              placeholder="Posez une question à ARIA..."
-              className="flex-1 h-10 px-3 bg-[#f8f5ff] border border-[#ded6f3] rounded-xl text-xs
-                         focus:outline-none focus:border-[#8127cf] focus:ring-2 focus:ring-[#8127cf]/20
-                         text-[#17132f] placeholder:text-[#68627a] transition-all"
-            />
-            <button onClick={() => send()}
-                    disabled={!input.trim()}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white
-                               disabled:opacity-40 hover:shadow-md transition-all active:scale-95"
-                    style={{ background: 'linear-gradient(135deg, #ec4899 0%, #8127cf 100%)' }}>
-              <span className="material-symbols-outlined text-[18px]">send</span>
-            </button>
+          <div className="px-4 pb-4 pt-2 border-t border-[#f0ebf8]">
+            <div className="flex items-end gap-2 bg-[#f8f5ff] rounded-2xl px-4 py-2.5
+                            border border-[#e5d8f5] focus-within:border-[#8127cf]/40">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKey}
+                placeholder="Posez votre question sur le cours…"
+                rows={1}
+                disabled={isLoading}
+                className="flex-1 bg-transparent border-none focus:outline-none text-sm
+                           text-[#0b1c30] placeholder:text-[#7e7385] resize-none
+                           disabled:opacity-50 max-h-24 overflow-y-auto leading-relaxed"
+                style={{ minHeight: '22px' }}
+              />
+              <button onClick={() => send()} disabled={!input.trim() || isLoading}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center
+                                 text-white transition-all active:scale-95
+                                 disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #ec4899, #8127cf)' }}>
+                <span className="material-symbols-outlined text-[18px]">send</span>
+              </button>
+            </div>
+            <p className="text-[10px] text-[#7e7385] text-center mt-2">
+              Réponses basées sur le contenu de vos leçons · IAAI eLearning 101
+            </p>
           </div>
         </div>
       )}
 
-      {/* Floating button */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2.5 px-5 py-3.5 rounded-full text-white font-bold text-sm
-                   shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all duration-300"
-        style={{ background: 'linear-gradient(135deg, #ec4899 0%, #8127cf 100%)' }}
-      >
-        <div className="relative">
-          <span className="material-symbols-outlined text-[20px]">smart_toy</span>
-          <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-white animate-pulse" />
-        </div>
-        ARIA
+      {/* Bouton flottant */}
+      <button onClick={() => setOpen(o => !o)}
+              className="w-14 h-14 rounded-full shadow-xl flex items-center justify-center
+                         text-white transition-all hover:scale-110 active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #ec4899 0%, #8127cf 100%)' }}
+              aria-label={open ? 'Fermer ARIA' : 'Ouvrir ARIA'}>
+        <span className="material-symbols-outlined text-[26px]">
+          {open ? 'close' : 'smart_toy'}
+        </span>
       </button>
     </div>
   )

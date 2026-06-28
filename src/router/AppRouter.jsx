@@ -43,6 +43,7 @@ const AdminHomePage      = lazy(() => import('@/pages/Admin/AdminHomePage'))
 const AdminUsersPage     = lazy(() => import('@/pages/Admin/AdminUsersPage'))
 const AdminCoursesPage   = lazy(() => import('@/pages/Admin/AdminCoursesPage'))
 
+const PaymentSuccessPage = lazy(() => import('@/pages/Payment/PaymentSuccessPage'))
 const NotFoundPage       = lazy(() => import('@/pages/NotFound/NotFoundPage'))
 
 // ─── Fallback Suspense ────────────────────────────────────────────────────────
@@ -101,6 +102,7 @@ function AppRouter() {
               <Route path={ROUTES.COMMUNITY}    element={<CommunautePage />} />
               <Route path={ROUTES.SETTINGS}     element={<SettingsPage />} />
               <Route path={ROUTES.SUBSCRIPTION} element={<UpgradePage />} />
+              <Route path="/payment/success" element={<PaymentSuccessPage />} />
               <Route path={ROUTES.SEARCH}       element={<SearchPage />} />
             </Route>
           </Route>
