@@ -112,10 +112,18 @@ export default function CurriculumPage() {
         totalCompleted += completedCount
         totalLessons   += total
 
+        // ── Logique de déblocage ─────────────────────────────────────────
+        // Module 1  → toujours accessible (gratuit)
+        // Modules 2-7 → Premium requis + module précédent complété à 100%
+        const isPremium      = user?.plan === 'premium'
+        const prevModDone    = idx === 0 || (enriched[idx - 1]?.progress === 100)
+        const moduleUnlocked = idx === 0 || (isPremium && prevModDone)
+
         let status = 'locked'
-        if (percent === 100)        status = 'done'
+        if (!moduleUnlocked)         status = 'locked'
+        else if (percent === 100)    status = 'done'
         else if (completedCount > 0) status = 'active'
-        else if (idx === 0)          status = 'active'
+        else                         status = 'active' 
 
         return {
           ...mod,
@@ -267,7 +275,13 @@ export default function CurriculumPage() {
                   </div>
                   {mod.status === 'done'   && <p className="text-xs text-green-600 font-bold uppercase">100% complété</p>}
                   {mod.status === 'active' && <p className="text-xs text-[#8127cf] font-bold uppercase">{mod.progress}% complété</p>}
-                  {mod.status === 'locked' && <p className="text-xs text-[#7e7385]/70 font-bold uppercase">Terminez le module précédent pour débloquer</p>}
+                  {mod.status === 'locked' && (
+                    <p className="text-xs text-[#7e7385]/70 font-bold uppercase">
+                      {user?.plan !== 'premium'
+                        ? '🔒 Passez au plan Premium pour débloquer'
+                        : 'Terminez le module précédent pour débloquer'}
+                    </p>
+                  )}
                 </div>
 
                 {mod.status === 'done' && (
@@ -284,11 +298,20 @@ export default function CurriculumPage() {
                   </Link>
                 )}
                 {mod.status === 'locked' && (
-                  <button disabled
-                    className="px-8 py-2.5 bg-[#e5eeff] text-[#7e7385]/50 rounded-xl font-bold text-sm cursor-not-allowed whitespace-nowrap flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">lock</span>
-                    Verrouillé
-                  </button>
+                  user?.plan !== 'premium' ? (
+                    <Link to={ROUTES.UPGRADE}
+                      className="px-8 py-2.5 rounded-xl text-white font-bold text-sm whitespace-nowrap transition-all hover:shadow-lg flex items-center gap-2"
+                      style={{ background: 'linear-gradient(135deg, #ec4899 0%, #8127cf 100%)' }}>
+                      <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
+                      Passer Premium
+                    </Link>
+                  ) : (
+                    <button disabled
+                      className="px-8 py-2.5 bg-[#e5eeff] text-[#7e7385]/50 rounded-xl font-bold text-sm cursor-not-allowed whitespace-nowrap flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px]">lock</span>
+                      Terminez le module précédent
+                    </button>
+                  )
                 )}
               </div>
             </div>
