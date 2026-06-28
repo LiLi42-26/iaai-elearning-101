@@ -103,27 +103,17 @@ export default function CurriculumPage() {
       let totalCompleted = 0
       let totalLessons   = 0
 
-      const enriched = modulesData.map((mod, idx) => {
-        const modLessons      = lessonsData.filter(l => l.module_id === mod.id)
-        const completedCount  = modLessons.filter(l => completedLessonIds.has(l.id)).length
-        const total           = modLessons.length
-        const percent         = total > 0 ? Math.round((completedCount / total) * 100) : 0
+      const isPremium = user?.plan === 'premium'
+
+      // ── Passe 1 : calculer les données de base (sans statut) ───────────────
+      const base = modulesData.map((mod) => {
+        const modLessons     = lessonsData.filter(l => l.module_id === mod.id)
+        const completedCount = modLessons.filter(l => completedLessonIds.has(l.id)).length
+        const total          = modLessons.length
+        const percent        = total > 0 ? Math.round((completedCount / total) * 100) : 0
 
         totalCompleted += completedCount
         totalLessons   += total
-
-        // ── Logique de déblocage ─────────────────────────────────────────
-        // Module 1  → toujours accessible (gratuit)
-        // Modules 2-7 → Premium requis + module précédent complété à 100%
-        const isPremium      = user?.plan === 'premium'
-        const prevModDone    = idx === 0 || (enriched[idx - 1]?.progress === 100)
-        const moduleUnlocked = idx === 0 || (isPremium && prevModDone)
-
-        let status = 'locked'
-        if (!moduleUnlocked)         status = 'locked'
-        else if (percent === 100)    status = 'done'
-        else if (completedCount > 0) status = 'active'
-        else                         status = 'active' 
 
         return {
           ...mod,
@@ -131,9 +121,22 @@ export default function CurriculumPage() {
           completedCount,
           totalLessons: total,
           progress:     percent,
-          status,
+          status:       'locked', // sera recalculé en passe 2
           durationText: `${total} leçons · ~${mod.duration_minutes}min`,
         }
+      })
+
+      // ── Passe 2 : calculer le statut (maintenant que base[] est complet) ──
+      const enriched = base.map((mod, idx) => {
+        const prevModDone    = idx === 0 || (base[idx - 1]?.progress === 100)
+        const moduleUnlocked = idx === 0 || (isPremium && prevModDone)
+
+        let status = 'locked'
+        if (!moduleUnlocked)              status = 'locked'
+        else if (mod.progress === 100)    status = 'done'
+        else                              status = 'active'
+
+        return { ...mod, status }
       })
 
       setModules(enriched)
