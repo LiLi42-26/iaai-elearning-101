@@ -145,6 +145,7 @@ export default function LessonPage() {
   const [lesson, setLesson]           = useState(null)
   const [siblings, setSiblings]       = useState([])   // toutes les leçons du module
   const [progress, setProgress]       = useState(null) // progression du module
+  const [quizId, setQuizId]           = useState(null)
   const [isCompleted, setIsCompleted] = useState(false)
   const [completing, setCompleting]   = useState(false)
   const [loading, setLoading]         = useState(true)
@@ -188,6 +189,21 @@ export default function LessonPage() {
     }
 
     load()
+
+    // Récupérer le quiz du module pour le bouton "Faire le quiz"
+    async function loadQuiz() {
+      try {
+        const lesson = await getLessonById(id)
+        if (!lesson?.module_id) return
+        const { data } = await supabase
+          .from('quizzes')
+          .select('id')
+          .eq('module_id', lesson.module_id)
+          .single()
+        if (data?.id) setQuizId(data.id)
+      } catch { /* quiz optionnel */ }
+    }
+    loadQuiz()
   }, [id, user?.id])
 
   // ── Marquer comme complétée ──────────────────────────────────────────────────
@@ -380,16 +396,29 @@ export default function LessonPage() {
                 <span className="material-symbols-outlined text-[20px]">east</span>
               </Link>
             ) : (
-              <Link
-                to={ROUTES.MODULE(lesson.module_id)}
-                className="flex items-center gap-2 px-8 py-3 rounded-xl
-                           text-white font-bold text-sm transition-all
-                           hover:scale-105 active:scale-95"
-                style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
-              >
-                Terminer le module
-                <span className="material-symbols-outlined text-[20px]">emoji_events</span>
-              </Link>
+              quizId ? (
+                <Link
+                  to={ROUTES.QUIZ(quizId)}
+                  className="flex items-center gap-2 px-8 py-3 rounded-xl
+                             text-white font-bold text-sm transition-all
+                             hover:scale-105 active:scale-95"
+                  style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
+                >
+                  <span className="material-symbols-outlined text-[20px]">quiz</span>
+                  Faire le quiz du module
+                </Link>
+              ) : (
+                <Link
+                  to={ROUTES.MODULE(lesson.module_id)}
+                  className="flex items-center gap-2 px-8 py-3 rounded-xl
+                             text-white font-bold text-sm transition-all
+                             hover:scale-105 active:scale-95"
+                  style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}
+                >
+                  Terminer le module
+                  <span className="material-symbols-outlined text-[20px]">emoji_events</span>
+                </Link>
+              )
             )}
           </div>
 
