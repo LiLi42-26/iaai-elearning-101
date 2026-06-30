@@ -48,6 +48,8 @@ export default function ProfilePage() {
   const [activity,      setActivity]      = useState([])
   const [memberSince,   setMemberSince]   = useState('')
   const [loading,       setLoading]       = useState(true)
+  const [avatarUrl,     setAvatarUrl]     = useState(null)
+  const [bio,           setBio]           = useState('')
 
   useEffect(() => {
     if (!user?.id) return
@@ -66,7 +68,7 @@ export default function ProfilePage() {
             .limit(5),
           supabase
             .from('profiles')
-            .select('created_at')
+            .select('created_at, avatar_url, bio')
             .eq('id', user.id)
             .single(),
         ])
@@ -75,6 +77,8 @@ export default function ProfilePage() {
         setQuizAttempts(attempts || [])
         setCertificates(certs || [])
         setActivity(actRes.data || [])
+        setAvatarUrl(profileRes.data?.avatar_url || null)
+        setBio(profileRes.data?.bio || '')
 
         if (profileRes.data?.created_at) {
           setMemberSince(
@@ -138,11 +142,19 @@ export default function ProfilePage() {
                           gap-8 shadow-sm mb-6">
         {/* Avatar */}
         <div className="relative">
-          <div className="w-32 h-32 rounded-full flex items-center justify-center
-                          text-white text-4xl font-bold"
-               style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}>
-            {initials}
-          </div>
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={fullName}
+              className="w-32 h-32 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-32 h-32 rounded-full flex items-center justify-center
+                            text-white text-4xl font-bold"
+                 style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}>
+              {initials}
+            </div>
+          )}
         </div>
 
         {/* Infos */}
@@ -159,6 +171,9 @@ export default function ProfilePage() {
           <p className="text-[#7e7385] text-sm mb-1">{email}</p>
           {memberSince && (
             <p className="text-xs text-[#7e7385]/70">Membre depuis {memberSince}</p>
+          )}
+          {bio && (
+            <p className="text-sm text-[#4d4354] mt-2 max-w-md">{bio}</p>
           )}
         </div>
 
@@ -239,9 +254,14 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <p className="font-bold text-[#0b1c30] text-sm">{badge.label}</p>
-                    <span className={`text-xs font-bold
+                    <span className={`text-xs font-bold flex items-center gap-1
                                      ${badge.status === 'done' ? 'text-green-600' : 'text-[#7e7385]'}`}>
-                      {badge.status === 'done' ? '✓ Obtenu' : 'Verrouillé'}
+                      {badge.status === 'done' ? (
+                        <>
+                          <span className="material-symbols-outlined text-[13px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                          Obtenu
+                        </>
+                      ) : 'Verrouillé'}
                     </span>
                   </div>
                 </div>

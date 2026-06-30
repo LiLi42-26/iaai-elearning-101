@@ -94,7 +94,7 @@ export default function UpgradePage() {
           Plan &amp; Abonnement
         </div>
         <h2 className="text-4xl font-bold font-display text-[#0b1c30] mb-3">
-          {isPremium ? 'Vous êtes Premium 🎉' : 'Débloquez tout votre potentiel'}
+          {isPremium ? 'Vous êtes Premium !' : 'Débloquez tout votre potentiel'}
         </h2>
         <p className="text-[#68627a] max-w-md mx-auto">
           {isPremium
@@ -141,8 +141,9 @@ export default function UpgradePage() {
                   </li>
                 ))}
               </ul>
-              <div className="w-full py-3.5 rounded-xl bg-[#f0dbff] text-[#8127cf] text-sm font-bold text-center">
-                ✓ Plan actuel
+              <div className="w-full py-3.5 rounded-xl bg-[#f0dbff] text-[#8127cf] text-sm font-bold text-center flex items-center justify-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                Plan actuel
               </div>
             </div>
 
@@ -217,7 +218,7 @@ export default function UpgradePage() {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
-            { icon: 'school',            color: 'text-violet-600', bg: 'bg-violet-50', title: '7 modules complets',  desc: 'Des bases jusqu\'aux LLMs et IA générative' },
+            { icon: 'school',            color: 'text-violet-600', bg: 'bg-violet-50', title: '8 modules complets',  desc: 'Des bases jusqu\'aux LLMs et IA générative' },
             { icon: 'smart_toy',         color: 'text-cyan-600',   bg: 'bg-cyan-50',   title: 'ARIA sans limite',    desc: 'Assistant IA personnel disponible 24h/24' },
             { icon: 'workspace_premium', color: 'text-yellow-600', bg: 'bg-yellow-50', title: 'Certificat officiel', desc: 'Certifié IAAI Academy, partageable sur LinkedIn' },
             { icon: 'code',              color: 'text-pink-600',   bg: 'bg-pink-50',   title: 'Notebooks Python',    desc: 'Pratiquez dans un environnement JupyterLite intégré' },

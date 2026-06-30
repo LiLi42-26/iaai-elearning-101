@@ -82,11 +82,11 @@ export default function Navbar({ setActivePage }) {
               </div>
               <div className="max-h-60 overflow-y-auto">
                 <div className="px-4 py-3 hover:bg-purple-50/50 border-b border-purple-50/30 transition-colors duration-200">
-                  <p className="text-xs text-slate-700 font-medium">✨ Nouveau module disponible : Introduction à NLP en Darija !</p>
+                  <p className="text-xs text-slate-700 font-medium">Nouveau module disponible : Introduction au NLP en Darija !</p>
                   <span className="text-[10px] text-slate-400">Il y a 2 heures</span>
                 </div>
                 <div className="px-4 py-3 hover:bg-purple-50/50 transition-colors duration-200">
-                  <p className="text-xs text-slate-700 font-medium">🏆 Félicitations ! Votre certificat "IA Fondations" est prêt.</p>
+                  <p className="text-xs text-slate-700 font-medium">Félicitations ! Votre certificat "IA Fondations" est prêt.</p>
                   <span className="text-[10px] text-slate-400">Hier</span>
                 </div>
               </div>

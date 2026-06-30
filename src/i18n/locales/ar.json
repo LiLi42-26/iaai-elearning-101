@@ -101,7 +101,7 @@
     "skip": "تخطي المقدمة"
   },
   "dashboard": {
-    "greeting": "مرحباً {{name}} 👋",
+    "greeting": "مرحباً {{name}}",
     "subtitle": "أنت تُحرز تقدماً رائعاً. استمر هكذا!",
     "progress_label": "تقدّم الدورة",
     "progress_value": "{{percent}}% ({{done}}/{{total}} درساً)",
@@ -137,7 +137,7 @@
     "back": "العودة إلى الوحدة",
     "lesson_of": "الدرس {{current}} / {{total}}",
     "plan": "خطة الدرس",
-    "tip": "💡 نصيحة",
+    "tip": " نصيحة",
     "try_code": "جرّب الكود",
     "run": "تشغيل",
     "output": "المخرجات",

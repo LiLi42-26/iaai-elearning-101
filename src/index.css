@@ -8,8 +8,8 @@
   --color-bg: #f8f5ff;
   --color-bg-card: #ffffff;
   --color-bg-muted: #eee7ff;
-  --color-primary: #6d28d9;
-  --color-primary-dark: #4c1d95;
+  --color-primary: #c026d3;
+  --color-primary-dark: #a21caf;
   --color-accent: #0891b2;
   --color-text: #17132f;
   --color-text-muted: #68627a;
@@ -75,11 +75,15 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-fuchsia-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-fuchsia-700 focus:outline-none focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-violet-100 px-5 py-2.5 text-sm font-semibold text-violet-900 transition-colors duration-150 hover:bg-violet-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-violet-100 px-5 py-2.5 text-sm font-semibold text-violet-900 transition-colors duration-150 hover:bg-violet-200 focus:outline-none focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border-2 border-violet-200 bg-white px-5 py-2.5 text-sm font-semibold text-violet-950 transition-colors duration-150 hover:border-fuchsia-300 hover:bg-fuchsia-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2;
   }
 
   .card {
@@ -97,7 +101,7 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-violet-800 via-violet-600 to-cyan-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-fuchsia-600 via-pink-500 to-violet-600 bg-clip-text text-transparent;
   }
 
   .bg-gradient-iaai {
@@ -106,5 +110,44 @@
 
   .glass {
     @apply border border-white/50 bg-white/80 backdrop-blur-md;
+  }
+
+  @keyframes wave-spin {
+    0%   { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(1.12); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+  .animate-wave-spin {
+    animation: wave-spin 16s linear infinite;
+    transform-origin: 50% 50%;
+  }
+
+  @keyframes float-y {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-14px); }
+  }
+  .animate-float {
+    animation: float-y 4.5s ease-in-out infinite;
+  }
+  .animate-float-delayed {
+    animation: float-y 4.5s ease-in-out infinite;
+    animation-delay: -2.25s;
+  }
+
+  @keyframes pulse-soft {
+    0%, 100% { transform: scale(1); opacity: 0.55; }
+    50%      { transform: scale(1.08); opacity: 0.85; }
+  }
+  .animate-pulse-soft {
+    animation: pulse-soft 5s ease-in-out infinite;
+  }
+
+  @keyframes kenburns {
+    0%   { transform: scale(1) translate(0, 0); }
+    50%  { transform: scale(1.08) translate(-1%, -1%); }
+    100% { transform: scale(1) translate(0, 0); }
+  }
+  .animate-kenburns {
+    animation: kenburns 9s ease-in-out infinite;
   }
 }

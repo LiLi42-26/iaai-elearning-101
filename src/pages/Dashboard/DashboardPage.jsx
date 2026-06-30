@@ -97,7 +97,10 @@ function RoadmapItem({ item, isLast }) {
           {item.title}
         </p>
         {item.status === 'done' && (
-          <p className="text-xs text-[#7e7385]">Terminé ✓</p>
+          <p className="text-xs text-[#7e7385] flex items-center gap-1">
+            <span className="material-symbols-outlined text-[14px] text-green-500" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+            Terminé
+          </p>
         )}
         {item.status === 'active' && (
           <div className="flex items-center gap-2 mt-1">
@@ -267,7 +270,7 @@ export default function DashboardPage() {
           ) : (
             <p className="text-sm text-[#7e7385]">
               {meta.overallPercent === 100
-                ? 'Tous les modules sont terminés ! 🎉'
+                ? 'Tous les modules sont terminés !'
                 : 'Commencez un module pour voir votre objectif'}
             </p>
           )}
@@ -385,7 +388,7 @@ export default function DashboardPage() {
 
         {/* Badges */}
         <div className="col-span-12 lg:col-span-4 bg-white border border-purple-100 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-xl font-bold font-display text-[#0b1c30] mb-6">🏅 Mes badges</h3>
+          <h3 className="text-xl font-bold font-display text-[#0b1c30] mb-6"> Mes badges</h3>
           <div className="grid grid-cols-3 gap-4">
             {/* Badge "AI Explorer" débloqué si au moins 1 leçon complétée */}
             <div
@@ -471,7 +474,7 @@ export default function DashboardPage() {
       {(loading || recommendations.length > 0) && (
         <div>
           <h3 className="text-xl font-bold font-display text-[#0b1c30] mb-6">
-            ✨ Recommandé pour vous
+            Recommandé pour vous
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {loading

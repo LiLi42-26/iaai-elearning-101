@@ -1,123 +1,61 @@
 // src/pages/Community/CommunautePage.jsx
-import { useState } from 'react'
-import { ROUTES } from '@/constants/routes'
+import { useState, useEffect, useCallback } from 'react'
+import { useAuthStore } from '@/store/authStore'
+import { supabase } from '@/services/supabaseClient'
 
-// ─── Données mockées ──────────────────────────────────────────────────────────
+// ─── Catégories disponibles ───────────────────────────────────────────────────
 const categories = ['Tous', 'Questions', 'Projets', 'Ressources', 'Annonces']
 
-const posts = [
-  {
-    id: 1,
-    category: 'Questions',
-    categoryColor: 'bg-cyan-100 text-cyan-700',
-    author: 'Yasmine B.',
-    initials: 'YB',
-    avatarGrad: 'from-cyan-400 to-blue-500',
-    time: 'Il y a 2 heures',
-    title: 'Comment fonctionne le backpropagation en deep learning ?',
-    body: "J'essaie de comprendre l'intuition derrière la rétropropagation. Est-ce que quelqu'un peut expliquer avec un exemple simple ? J'ai regardé plusieurs vidéos mais ça reste flou.",
-    likes: 14,
-    comments: 7,
-    views: 98,
-    pinned: false,
-    liked: false,
-  },
-  {
-    id: 2,
-    category: 'Annonces',
-    categoryColor: 'bg-pink-100 text-pink-700',
-    author: 'IAAI Academy',
-    initials: 'IA',
-    avatarGrad: 'from-pink-500 to-violet-600',
-    time: 'Hier, 10:00',
-    title: '🎉 Module 4 — Réseaux de neurones disponible dès maintenant !',
-    body: 'Nous avons le plaisir d\'annoncer la mise en ligne du Module 4. Au programme : perceptrons, fonctions d\'activation, et votre premier réseau de neurones en Python. Bonne exploration !',
-    likes: 52,
-    comments: 19,
-    views: 341,
-    pinned: true,
-    liked: true,
-  },
-  {
-    id: 3,
-    category: 'Projets',
-    categoryColor: 'bg-violet-100 text-violet-700',
-    author: 'Mehdi A.',
-    initials: 'MA',
-    avatarGrad: 'from-violet-400 to-purple-600',
-    time: 'Il y a 2 jours',
-    title: 'Mon premier classificateur d\'images — retour d\'expérience 🚀',
-    body: 'J\'ai terminé le projet final du module 3 ! J\'ai construit un classificateur qui distingue chats et chiens avec 89% de précision. Je partage mon notebook Jupyter si ça intéresse.',
-    likes: 31,
-    comments: 12,
-    views: 187,
-    pinned: false,
-    liked: false,
-  },
-  {
-    id: 4,
-    category: 'Ressources',
-    categoryColor: 'bg-yellow-100 text-yellow-700',
-    author: 'Fatima Z.',
-    initials: 'FZ',
-    avatarGrad: 'from-yellow-400 to-orange-500',
-    time: 'Il y a 3 jours',
-    title: '📚 Liste de ressources gratuites pour apprendre l\'IA en 2026',
-    body: 'Je compile une liste des meilleures ressources gratuites : papers, datasets, cours en ligne, chaînes YouTube... La liste est déjà à 40+ liens. Dites-moi si vous avez des suggestions !',
-    likes: 67,
-    comments: 24,
-    views: 512,
-    pinned: false,
-    liked: false,
-  },
-  {
-    id: 5,
-    category: 'Questions',
-    categoryColor: 'bg-cyan-100 text-cyan-700',
-    author: 'Omar K.',
-    initials: 'OK',
-    avatarGrad: 'from-green-400 to-cyan-500',
-    time: 'Il y a 4 jours',
-    title: 'Différence entre overfitting et underfitting — exemple concret ?',
-    body: 'Je sais la définition théorique mais j\'ai du mal à reconnaître ces problèmes dans la pratique. Y\'a-t-il une règle simple pour les détecter lors de l\'entraînement ?',
-    likes: 8,
-    comments: 5,
-    views: 74,
-    pinned: false,
-    liked: false,
-  },
-]
+const categoryColors = {
+  Questions:  'bg-cyan-100 text-cyan-700',
+  Projets:    'bg-violet-100 text-violet-700',
+  Ressources: 'bg-yellow-100 text-yellow-700',
+  Annonces:   'bg-pink-100 text-pink-700',
+}
 
-const members = [
-  { name: 'Yasmine B.',   initials: 'YB', grad: 'from-cyan-400 to-blue-500',    posts: 23, badge: 'Top contributeur' },
-  { name: 'Mehdi A.',     initials: 'MA', grad: 'from-violet-400 to-purple-600', posts: 18, badge: 'Actif ce mois'    },
-  { name: 'Fatima Z.',    initials: 'FZ', grad: 'from-yellow-400 to-orange-500', posts: 15, badge: 'Mentor'           },
-  { name: 'Karim S.',     initials: 'KS', grad: 'from-pink-400 to-rose-500',     posts: 12, badge: null               },
-  { name: 'Nour El H.',   initials: 'NH', grad: 'from-green-400 to-teal-500',    posts: 9,  badge: null               },
-]
+// ─── Fonction utilitaire : temps relatif ─────────────────────────────────────
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins  = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days  = Math.floor(diff / 86400000)
+  if (mins  <  1) return "À l'instant"
+  if (mins  < 60) return `Il y a ${mins} min`
+  if (hours < 24) return `Il y a ${hours} heure${hours > 1 ? 's' : ''}`
+  if (days  <  7) return `Il y a ${days} jour${days > 1 ? 's' : ''}`
+  return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+}
 
 // ─── Composant PostCard ───────────────────────────────────────────────────────
-function PostCard({ post }) {
-  const [liked, setLiked] = useState(post.liked)
-  const [likeCount, setLikeCount] = useState(post.likes)
+function PostCard({ post, currentUserId, onLikeToggle }) {
+  const initials = (post.author_name || 'AN')
+    .split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
-  const handleLike = () => {
-    setLiked(!liked)
-    setLikeCount(liked ? likeCount - 1 : likeCount + 1)
-  }
+  const gradients = [
+    'from-cyan-400 to-blue-500',
+    'from-violet-400 to-purple-600',
+    'from-pink-400 to-rose-500',
+    'from-yellow-400 to-orange-500',
+    'from-green-400 to-teal-500',
+    'from-fuchsia-400 to-violet-600',
+  ]
+  // Gradient déterministe basé sur l'id de l'auteur
+  const grad = gradients[(post.author_id?.charCodeAt(0) || 0) % gradients.length]
+
+  const liked     = post.liked_by?.includes(currentUserId) ?? false
+  const likeCount = post.liked_by?.length ?? 0
 
   return (
     <article className="bg-white rounded-2xl border border-[#ded6f3] p-6 hover:shadow-md hover:border-[#8127cf]/30 transition-all group">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          {/* Avatar */}
-          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${post.avatarGrad} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
-            {post.initials}
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${grad} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
+            {initials}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-[#17132f]">{post.author}</span>
+              <span className="text-sm font-semibold text-[#17132f]">{post.author_name || 'Anonyme'}</span>
               {post.pinned && (
                 <span className="flex items-center gap-1 text-xs text-[#8127cf] bg-[#f0dbff] px-2 py-0.5 rounded-full">
                   <span className="material-symbols-outlined text-[12px]">push_pin</span>
@@ -125,10 +63,10 @@ function PostCard({ post }) {
                 </span>
               )}
             </div>
-            <span className="text-xs text-[#68627a]">{post.time}</span>
+            <span className="text-xs text-[#68627a]">{timeAgo(post.created_at)}</span>
           </div>
         </div>
-        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${post.categoryColor}`}>
+        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${categoryColors[post.category] || 'bg-slate-100 text-slate-700'}`}>
           {post.category}
         </span>
       </div>
@@ -144,45 +82,216 @@ function PostCard({ post }) {
       {/* Footer */}
       <div className="flex items-center gap-5 text-sm text-[#68627a]">
         <button
-          onClick={handleLike}
+          onClick={() => onLikeToggle(post.id, liked)}
           className={`flex items-center gap-1.5 transition-colors hover:text-pink-600 ${liked ? 'text-pink-600' : ''}`}
+          aria-label={liked ? 'Retirer le like' : 'Liker'}
         >
-          <span className="material-symbols-outlined text-[18px]">{liked ? 'favorite' : 'favorite_border'}</span>
+          <span
+            className="material-symbols-outlined text-[18px]"
+            style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}
+          >
+            favorite
+          </span>
           <span className="font-medium">{likeCount}</span>
         </button>
-        <button className="flex items-center gap-1.5 hover:text-[#8127cf] transition-colors">
+        <div className="flex items-center gap-1.5">
           <span className="material-symbols-outlined text-[18px]">chat_bubble_outline</span>
-          <span className="font-medium">{post.comments}</span>
-        </button>
+          <span className="font-medium">{post.comment_count ?? 0}</span>
+        </div>
         <div className="flex items-center gap-1.5 ml-auto">
           <span className="material-symbols-outlined text-[18px]">visibility</span>
-          <span>{post.views}</span>
+          <span>{post.view_count ?? 0}</span>
         </div>
       </div>
     </article>
   )
 }
 
+// ─── Skeleton de chargement ───────────────────────────────────────────────────
+function PostSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-[#ded6f3] p-6 animate-pulse space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-[#e5eeff]" />
+        <div className="space-y-2 flex-1">
+          <div className="h-3 w-32 bg-[#e5eeff] rounded" />
+          <div className="h-2 w-20 bg-[#e5eeff] rounded" />
+        </div>
+      </div>
+      <div className="h-4 w-3/4 bg-[#e5eeff] rounded" />
+      <div className="h-3 w-full bg-[#e5eeff] rounded" />
+      <div className="h-3 w-2/3 bg-[#e5eeff] rounded" />
+    </div>
+  )
+}
+
 // ─── Page principale ──────────────────────────────────────────────────────────
 export default function CommunautePage() {
-  const [activeCategory, setActiveCategory] = useState('Tous')
-  const [search, setSearch] = useState('')
-  const [showModal, setShowModal] = useState(false)
+  const { user } = useAuthStore()
 
+  const [posts,           setPosts]           = useState([])
+  const [topMembers,      setTopMembers]      = useState([])
+  const [stats,           setStats]           = useState({ discussions: 0, members: 0, replies: 0 })
+  const [loading,         setLoading]         = useState(true)
+  const [error,           setError]           = useState(null)
+  const [activeCategory,  setActiveCategory]  = useState('Tous')
+  const [search,          setSearch]          = useState('')
+  const [showModal,       setShowModal]       = useState(false)
+
+  // Formulaire nouveau post
+  const [newCategory, setNewCategory] = useState('Questions')
+  const [newTitle,    setNewTitle]    = useState('')
+  const [newBody,     setNewBody]     = useState('')
+  const [submitting,  setSubmitting]  = useState(false)
+
+  // ── Chargement des données ─────────────────────────────────────────────────
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      // Posts — on joint le profil de l'auteur
+      const { data: postsData, error: postsError } = await supabase
+        .from('community_posts')
+        .select(`
+          id,
+          title,
+          body,
+          category,
+          pinned,
+          liked_by,
+          view_count,
+          comment_count,
+          created_at,
+          author_id,
+          profiles ( full_name )
+        `)
+        .order('pinned',      { ascending: false })
+        .order('created_at',  { ascending: false })
+        .limit(50)
+
+      if (postsError) throw postsError
+
+      const normalized = (postsData || []).map(p => ({
+        ...p,
+        author_name: p.profiles?.full_name || 'Anonyme',
+        liked_by:    p.liked_by || [],
+      }))
+      setPosts(normalized)
+
+      // Top contributeurs — nombre de posts par utilisateur
+      const { data: membersData } = await supabase
+        .from('community_posts')
+        .select('author_id, profiles ( full_name )')
+        .order('created_at', { ascending: false })
+
+      if (membersData) {
+        const counts = {}
+        membersData.forEach(p => {
+          const key  = p.author_id
+          const name = p.profiles?.full_name || 'Anonyme'
+          counts[key] = counts[key] ? { ...counts[key], count: counts[key].count + 1 } : { name, count: 1 }
+        })
+        const sorted = Object.entries(counts)
+          .sort(([, a], [, b]) => b.count - a.count)
+          .slice(0, 5)
+          .map(([id, v]) => ({ id, name: v.name, count: v.count }))
+        setTopMembers(sorted)
+      }
+
+      // Stats globales
+      const { count: memberCount } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+
+      setStats({
+        discussions: normalized.length,
+        members:     memberCount || 0,
+        replies:     normalized.reduce((a, p) => a + (p.comment_count || 0), 0),
+      })
+    } catch (err) {
+      console.error('Erreur communauté:', err)
+      setError('Impossible de charger les discussions. Vérifiez votre connexion ou vos clés Supabase.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetchData() }, [fetchData])
+
+  // ── Like / Unlike ──────────────────────────────────────────────────────────
+  const handleLikeToggle = async (postId, isLiked) => {
+    if (!user?.id) return
+
+    // Optimistic update
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p
+      const liked_by = isLiked
+        ? p.liked_by.filter(id => id !== user.id)
+        : [...p.liked_by, user.id]
+      return { ...p, liked_by }
+    }))
+
+    // Persistance Supabase
+    const post = posts.find(p => p.id === postId)
+    if (!post) return
+    const newLikedBy = isLiked
+      ? post.liked_by.filter(id => id !== user.id)
+      : [...post.liked_by, user.id]
+
+    await supabase
+      .from('community_posts')
+      .update({ liked_by: newLikedBy })
+      .eq('id', postId)
+  }
+
+  // ── Publier un nouveau post ────────────────────────────────────────────────
+  const handleSubmitPost = async () => {
+    if (!newTitle.trim() || !newBody.trim() || !user?.id) return
+    setSubmitting(true)
+    try {
+      const { error: insertError } = await supabase
+        .from('community_posts')
+        .insert({
+          author_id:     user.id,
+          title:         newTitle.trim(),
+          body:          newBody.trim(),
+          category:      newCategory,
+          liked_by:      [],
+          view_count:    0,
+          comment_count: 0,
+          pinned:        false,
+        })
+      if (insertError) throw insertError
+
+      setNewTitle('')
+      setNewBody('')
+      setNewCategory('Questions')
+      setShowModal(false)
+      await fetchData()
+    } catch (err) {
+      console.error('Erreur publication:', err)
+      alert('Erreur lors de la publication. Veuillez réessayer.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // ── Filtrage local ─────────────────────────────────────────────────────────
   const filtered = posts.filter(p => {
-    const matchCat = activeCategory === 'Tous' || p.category === activeCategory
+    const matchCat    = activeCategory === 'Tous' || p.category === activeCategory
     const matchSearch = p.title.toLowerCase().includes(search.toLowerCase()) ||
                         p.body.toLowerCase().includes(search.toLowerCase())
     return matchCat && matchSearch
   })
 
-  const pinned = filtered.filter(p => p.pinned)
+  const pinned  = filtered.filter(p =>  p.pinned)
   const regular = filtered.filter(p => !p.pinned)
 
+  // ── Rendu ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#f8f5ff] pb-12">
 
-      {/* ── Header ───────────────────────────────────────────────────────────── */}
+      {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-3xl font-bold font-display text-[#0b1c30]">Communauté</h2>
@@ -199,9 +308,23 @@ export default function CommunautePage() {
         </button>
       </div>
 
+      {/* ── Message d'erreur ──────────────────────────────────────────────── */}
+      {error && (
+        <div className="mb-6 flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4">
+          <span className="material-symbols-outlined text-red-500 text-[20px] mt-0.5">error</span>
+          <div>
+            <p className="text-sm font-semibold text-red-700">Erreur de chargement</p>
+            <p className="text-xs text-red-600 mt-0.5">{error}</p>
+          </div>
+          <button onClick={fetchData} className="ml-auto text-xs text-red-700 font-bold hover:underline shrink-0">
+            Réessayer
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* ── Colonne principale ─────────────────────────────────────────────── */}
+        {/* ── Colonne principale ─────────────────────────────────────────── */}
         <div className="lg:col-span-2 space-y-4">
 
           {/* Barre de recherche + filtres */}
@@ -239,9 +362,9 @@ export default function CommunautePage() {
           {/* Stats rapides */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { icon: 'forum',    value: posts.length,                        label: 'Discussions' },
-              { icon: 'group',    value: '142',                               label: 'Membres actifs' },
-              { icon: 'trending_up', value: posts.reduce((a,p)=>a+p.comments,0), label: 'Réponses' },
+              { icon: 'forum',        value: stats.discussions, label: 'Discussions'    },
+              { icon: 'group',        value: stats.members,     label: 'Membres actifs' },
+              { icon: 'trending_up',  value: stats.replies,     label: 'Réponses'       },
             ].map(s => (
               <div key={s.label} className="bg-white rounded-xl border border-[#ded6f3] p-4 text-center">
                 <span className="material-symbols-outlined text-[#8127cf] text-[24px] mb-1">{s.icon}</span>
@@ -251,28 +374,55 @@ export default function CommunautePage() {
             ))}
           </div>
 
-          {/* Posts épinglés */}
-          {pinned.length > 0 && (
+          {/* Posts */}
+          {loading ? (
             <div className="space-y-3">
-              {pinned.map(post => <PostCard key={post.id} post={post} />)}
-            </div>
-          )}
-
-          {/* Posts normaux */}
-          {regular.length > 0 ? (
-            <div className="space-y-3">
-              {regular.map(post => <PostCard key={post.id} post={post} />)}
+              {[1, 2, 3].map(i => <PostSkeleton key={i} />)}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-[#ded6f3] p-12 text-center">
-              <span className="material-symbols-outlined text-[#cfc2d6] text-[48px] mb-3">forum</span>
-              <p className="text-[#68627a] font-medium">Aucune discussion trouvée</p>
-              <p className="text-sm text-[#68627a]/70 mt-1">Essayez un autre filtre ou lancez la première !</p>
-            </div>
+            <>
+              {/* Posts épinglés */}
+              {pinned.length > 0 && (
+                <div className="space-y-3">
+                  {pinned.map(post => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      currentUserId={user?.id}
+                      onLikeToggle={handleLikeToggle}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Posts normaux */}
+              {regular.length > 0 ? (
+                <div className="space-y-3">
+                  {regular.map(post => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      currentUserId={user?.id}
+                      onLikeToggle={handleLikeToggle}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-[#ded6f3] p-12 text-center">
+                  <span className="material-symbols-outlined text-[#cfc2d6] text-[48px] mb-3">forum</span>
+                  <p className="text-[#68627a] font-medium">
+                    {search ? 'Aucune discussion ne correspond à votre recherche.' : 'Aucune discussion dans cette catégorie.'}
+                  </p>
+                  <p className="text-sm text-[#68627a]/70 mt-1">
+                    {search ? 'Essayez avec d\'autres mots-clés.' : 'Soyez le premier à lancer la conversation !'}
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
-        {/* ── Colonne latérale ──────────────────────────────────────────────── */}
+        {/* ── Colonne latérale ──────────────────────────────────────────── */}
         <div className="space-y-5">
 
           {/* Top contributeurs */}
@@ -281,23 +431,37 @@ export default function CommunautePage() {
               <span className="material-symbols-outlined text-yellow-500 text-[20px]">emoji_events</span>
               Top contributeurs
             </h3>
-            <div className="space-y-3">
-              {members.map((m, i) => (
-                <div key={m.name} className="flex items-center gap-3">
-                  <span className="w-5 text-xs font-bold text-[#68627a] text-center">{i + 1}</span>
-                  <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${m.grad} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-                    {m.initials}
+            {loading ? (
+              <div className="space-y-3">
+                {[1,2,3].map(i => (
+                  <div key={i} className="flex items-center gap-3 animate-pulse">
+                    <div className="w-9 h-9 rounded-full bg-[#e5eeff]" />
+                    <div className="flex-1 h-3 bg-[#e5eeff] rounded" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#17132f] truncate">{m.name}</p>
-                    {m.badge && (
-                      <span className="text-xs text-[#8127cf] bg-[#f0dbff] px-2 py-0.5 rounded-full">{m.badge}</span>
-                    )}
-                  </div>
-                  <span className="text-xs text-[#68627a]">{m.posts} posts</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : topMembers.length > 0 ? (
+              <div className="space-y-3">
+                {topMembers.map((m, i) => {
+                  const initials = m.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                  const gradients = ['from-cyan-400 to-blue-500','from-violet-400 to-purple-600','from-pink-400 to-rose-500','from-yellow-400 to-orange-500','from-green-400 to-teal-500']
+                  return (
+                    <div key={m.id} className="flex items-center gap-3">
+                      <span className="w-5 text-xs font-bold text-[#68627a] text-center">{i + 1}</span>
+                      <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${gradients[i % gradients.length]} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+                        {initials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#17132f] truncate">{m.name}</p>
+                      </div>
+                      <span className="text-xs text-[#68627a]">{m.count} posts</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-[#68627a] text-center py-4">Aucun contributeur pour l'instant.</p>
+            )}
           </div>
 
           {/* Règles de la communauté */}
@@ -331,26 +495,33 @@ export default function CommunautePage() {
               <span className="font-bold text-sm">ARIA vous suggère</span>
             </div>
             <p className="text-sm opacity-90 leading-relaxed">
-              Basé sur votre progression au Module 3, la discussion sur le backpropagation pourrait vous être très utile !
+              Participez aux discussions pour renforcer votre compréhension et aider la communauté à grandir !
             </p>
           </div>
         </div>
       </div>
 
-      {/* ── Modal nouvelle discussion ─────────────────────────────────────────── */}
+      {/* ── Modal nouvelle discussion ──────────────────────────────────────── */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold font-display text-[#17132f]">Nouvelle discussion</h3>
-              <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-full hover:bg-[#f0dbff] flex items-center justify-center transition-colors">
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-8 h-8 rounded-full hover:bg-[#f0dbff] flex items-center justify-center transition-colors"
+              >
                 <span className="material-symbols-outlined text-[#68627a] text-[18px]">close</span>
               </button>
             </div>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-[#17132f] mb-1.5">Catégorie</label>
-                <select className="w-full px-4 py-2.5 rounded-xl border border-[#ded6f3] text-sm focus:outline-none focus:border-[#8127cf] focus:ring-2 focus:ring-[#8127cf]/20">
+                <select
+                  value={newCategory}
+                  onChange={e => setNewCategory(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#ded6f3] text-sm focus:outline-none focus:border-[#8127cf] focus:ring-2 focus:ring-[#8127cf]/20"
+                >
                   {categories.filter(c => c !== 'Tous').map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
@@ -358,6 +529,8 @@ export default function CommunautePage() {
                 <label className="block text-sm font-semibold text-[#17132f] mb-1.5">Titre</label>
                 <input
                   type="text"
+                  value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)}
                   placeholder="Posez une question claire et précise..."
                   className="w-full px-4 py-2.5 rounded-xl border border-[#ded6f3] text-sm focus:outline-none focus:border-[#8127cf] focus:ring-2 focus:ring-[#8127cf]/20"
                 />
@@ -366,6 +539,8 @@ export default function CommunautePage() {
                 <label className="block text-sm font-semibold text-[#17132f] mb-1.5">Contenu</label>
                 <textarea
                   rows={5}
+                  value={newBody}
+                  onChange={e => setNewBody(e.target.value)}
                   placeholder="Décrivez votre question ou partagez vos connaissances..."
                   className="w-full px-4 py-2.5 rounded-xl border border-[#ded6f3] text-sm focus:outline-none focus:border-[#8127cf] focus:ring-2 focus:ring-[#8127cf]/20 resize-none"
                 />
@@ -379,11 +554,18 @@ export default function CommunautePage() {
                 Annuler
               </button>
               <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 py-3 rounded-xl text-white text-sm font-bold hover:shadow-lg hover:shadow-[#8127cf]/20 transition-all"
+                onClick={handleSubmitPost}
+                disabled={submitting || !newTitle.trim() || !newBody.trim()}
+                className="flex-1 py-3 rounded-xl text-white text-sm font-bold hover:shadow-lg hover:shadow-[#8127cf]/20 transition-all
+                           disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 style={{ background: 'linear-gradient(135deg, #ec4899 0%, #8127cf 100%)' }}
               >
-                Publier
+                {submitting ? (
+                  <>
+                    <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                    Publication...
+                  </>
+                ) : 'Publier'}
               </button>
             </div>
           </div>

@@ -81,7 +81,7 @@
       "eyebrow": "Étape 1 sur 3",
       "title": "Bienvenue sur IAAI eLearning 101 !",
       "text": "La plateforme marocaine pour apprendre l'IA de zéro.",
-      "chips": ["7 modules", "38 leçons", "Certifié"],
+      "chips": ["8 modules", "38 leçons", "Certifié"],
       "button": "Commencer"
     },
     "step2": {
@@ -123,7 +123,7 @@
   },
   "curriculum": {
     "title": "Mon Parcours IA",
-    "subtitle": "AI Foundations 101 — 7 modules · 38 leçons",
+    "subtitle": "AI Foundations 101 — 8 modules · 38 leçons",
     "unlock_after": "Terminez le module précédent pour débloquer",
     "continue": "Continuer",
     "start": "Commencer",
@@ -277,7 +277,7 @@
   "landing": {
     "hero_title": "Apprenez l'IA",
     "hero_title_gradient": "de Zéro à Expert",
-    "hero_subtitle": "La première plateforme IA pensée pour les apprenants marocains et francophones. 7 modules · 38 leçons · Certifié.",
+    "hero_subtitle": "La première plateforme IA pensée pour les apprenants marocains et francophones. 8 modules · 38 leçons · Certifié.",
     "hero_cta": "Commencer gratuitement",
     "hero_login": "Déjà membre ?",
     "nav_curriculum": "Cursus",

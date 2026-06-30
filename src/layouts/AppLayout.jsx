@@ -26,7 +26,7 @@ export default function AppLayout() {
     : 'U'
 
   // Plan affiché en sidebar — lu depuis le store (lui-même lu depuis Supabase)
-  const planLabel = user?.plan === 'premium' ? 'Plan Premium ✨' : 'Plan Gratuit'
+  const planLabel = user?.plan === 'premium' ? 'Plan Premium' : 'Plan Gratuit'
   const isPremium = user?.plan === 'premium'
 
   const handleLogout = async () => {

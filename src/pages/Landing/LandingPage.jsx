@@ -2,7 +2,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
-import logo from '@/assets/logo-iaai.png'
+import Logo from '@/components/ui/Logo'
+import module1Image from '@/assets/modules/module1-fondations.png'
+import module2Image from '@/assets/modules/module2-deeplearning.png'
 
 const stats = [
   { value: '2 400+', label: 'Apprenants' },
@@ -14,17 +16,20 @@ const stats = [
 const audiences = [
   {
     title: 'Étudiant',
-    icon: '🎓',
+    icon: 'school',
+    accent: 'bg-violet-100 text-violet-700',
     text: "Vous préparez votre avenir dans la tech et voulez comprendre l'IA avant tout le monde.",
   },
   {
     title: 'Professionnel',
-    icon: '💼',
+    icon: 'work',
+    accent: 'bg-cyan-100 text-cyan-700',
     text: "Vous voulez intégrer l'IA dans votre métier sans avoir de background technique.",
   },
   {
     title: 'Curieux',
-    icon: '🤔',
+    icon: 'psychology',
+    accent: 'bg-fuchsia-100 text-fuchsia-700',
     text: "Vous entendez parler d'IA partout et vous voulez enfin comprendre de quoi il s'agit.",
   },
 ]
@@ -72,20 +77,18 @@ const courses = [
   {
     level: 'Débutant',
     meta: '12 leçons · 8h',
-    title: 'Fondations IA',
+    title: "Module 1 — Qu'est-ce que l'IA ?",
     text: "Les bases pour comprendre l'IA sans avoir besoin de coder.",
-    gradientFrom: 'from-violet-400',
-    gradientTo: 'to-cyan-400',
+    image: module1Image,
     accent: 'border-violet-200',
     badge: 'bg-violet-100 text-violet-800',
   },
   {
     level: 'Intermédiaire',
     meta: '18 leçons · 14h',
-    title: 'Deep Learning & Applications',
+    title: 'Module 2 — Deep Learning',
     text: 'Découvrez comment les machines apprennent, avec des exemples concrets et visuels.',
-    gradientFrom: 'from-fuchsia-400',
-    gradientTo: 'to-violet-600',
+    image: module2Image,
     accent: 'border-fuchsia-200',
     badge: 'bg-fuchsia-100 text-fuchsia-800',
   },
@@ -208,7 +211,10 @@ function LandingPage() {
 
         <div className="relative mx-auto max-w-7xl text-center">
           {/* Badge */}
-          <p className="mx-auto mb-8 w-fit rounded-full bg-violet-100 px-4 py-1.5 text-sm font-semibold text-violet-800">
+          <p className="mx-auto mb-8 flex w-fit items-center gap-1.5 rounded-full bg-fuchsia-100 px-4 py-1.5 text-sm font-semibold text-fuchsia-800">
+            <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+              auto_awesome
+            </span>
             IAAI eLearning 101 — Nouvelle génération
           </p>
 
@@ -234,7 +240,7 @@ function LandingPage() {
                 arrow_forward
               </span>
             </a>
-            <Link className="btn-secondary px-8 py-4" to={ROUTES.REGISTER}>
+            <Link className="btn-outline px-8 py-4" to={ROUTES.REGISTER}>
               Commencer gratuitement
             </Link>
           </div>
@@ -243,7 +249,7 @@ function LandingPage() {
           <div className="mx-auto mt-20 grid max-w-4xl grid-cols-2 gap-6 rounded-2xl border border-violet-100 bg-white p-8 shadow-sm md:grid-cols-4">
             {stats.map((stat, i) => (
               <div key={stat.label} className={`text-center ${i > 0 ? 'border-l border-violet-100' : ''}`}>
-                <div className="text-2xl font-extrabold text-violet-800">{stat.value}</div>
+                <div className="text-2xl font-extrabold text-fuchsia-700">{stat.value}</div>
                 <div className="mt-1 text-xs font-bold uppercase tracking-wider text-slate-500">{stat.label}</div>
               </div>
             ))}
@@ -262,9 +268,12 @@ function LandingPage() {
               <article
                 key={audience.title}
                 className="rounded-xl border border-violet-100 bg-slate-50 p-8 text-left
-                           hover:border-violet-300 hover:shadow-sm transition-all"
+                           hover:border-violet-300 hover:shadow-sm transition-all group"
               >
-                <div className="mb-6 text-4xl">{audience.icon}</div>
+                <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-xl ${audience.accent}
+                                 group-hover:scale-110 transition-transform`}>
+                  <span className="material-symbols-outlined text-[26px]">{audience.icon}</span>
+                </div>
                 <h3 className="text-xl font-display font-bold text-violet-950">{audience.title}</h3>
                 <p className="mt-3 text-[var(--color-text-muted)]">{audience.text}</p>
               </article>
@@ -323,9 +332,12 @@ function LandingPage() {
                   </div>
                   <h3 className="text-3xl font-display font-bold text-violet-950">{course.title}</h3>
                   <p className="mt-4 text-[var(--color-text-muted)]">{course.text}</p>
-                  <div className={`mt-8 h-48 overflow-hidden rounded-2xl bg-gradient-to-br ${course.gradientFrom} ${course.gradientTo}
-                                   flex items-center justify-center`}>
-                    <span className="text-white/20 font-display font-bold text-8xl">IA</span>
+                  <div className="mt-8 h-48 overflow-hidden rounded-2xl">
+                    <img
+                      src={course.image}
+                      alt={course.title}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                   <Link to={ROUTES.REGISTER} className="btn-secondary mt-8 w-full text-center block">
                     {"S'inscrire au module"}
@@ -403,12 +415,12 @@ function LandingPage() {
                 key={plan.name}
                 className={`relative flex flex-col rounded-3xl bg-white p-8 transition
                   ${plan.highlighted
-                    ? 'border-2 border-violet-700 shadow-xl shadow-violet-100 md:scale-105'
+                    ? 'border-2 border-fuchsia-600 shadow-xl shadow-fuchsia-100 md:scale-105'
                     : 'border border-violet-100 hover:border-violet-300'
                   }`}
               >
                 {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-violet-700
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-fuchsia-600
                                    px-4 py-1 text-xs font-bold uppercase tracking-widest text-white">
                     Recommandé
                   </div>
@@ -456,7 +468,8 @@ function LandingPage() {
       <footer className="bg-slate-900 px-4 py-16 text-white sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-4">
           <div>
-            <img src={logo} alt="IAAI eLearning 101" className="h-10 object-contain" />            <p className="mt-4 text-sm text-slate-300">
+            <Logo size="sm" />
+            <p className="mt-4 text-sm text-slate-300">
               La plateforme marocaine d&apos;apprentissage de l&apos;IA nouvelle génération.
               Visualisez le futur, maîtrisez la technologie.
             </p>
@@ -492,7 +505,7 @@ function LandingPage() {
         </div>
         <div className="mx-auto mt-12 flex max-w-7xl flex-col justify-between gap-4
                         border-t border-white/10 pt-8 text-sm text-slate-400 md:flex-row">
-          <p>© 2026 IAAI eLearning 101 — Fièrement conçu au Maroc 🇲🇦</p>
+          <p>© 2026 IAAI eLearning 101 — Fièrement conçu au Maroc</p>
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
             <span>Tous les systèmes sont opérationnels</span>

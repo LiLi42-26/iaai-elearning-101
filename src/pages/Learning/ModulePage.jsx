@@ -220,6 +220,64 @@ export default function ModulePage() {
           )}
         </div>
       </section>
+
+      {/* ── Quiz du module ────────────────────────────────────────────────── */}
+      {!loading && (
+        <section className="mt-10">
+          <h3 className="text-xl font-bold font-display text-[#0b1c30] mb-6">Quiz du module</h3>
+          <div className={`rounded-2xl border p-6 flex flex-col sm:flex-row items-center gap-6
+                          ${progress === 100
+                            ? 'bg-white border-[#8127cf]/20'
+                            : 'bg-[#f8f5ff] border-[#8127cf]/10'}`}>
+            {/* Icône */}
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0
+                            ${progress === 100 ? 'bg-[#f0dbff]' : 'bg-[#e5eeff]'}`}>
+              <span className={`material-symbols-outlined text-[32px]
+                               ${progress === 100 ? 'text-[#8127cf]' : 'text-[#7e7385]'}`}>
+                quiz
+              </span>
+            </div>
+
+            {/* Texte */}
+            <div className="flex-1 text-center sm:text-left">
+              <p className={`text-base font-bold ${progress === 100 ? 'text-[#0b1c30]' : 'text-[#7e7385]'}`}>
+                {progress === 100 ? 'Quiz disponible — testez vos connaissances !' : 'Quiz verrouillé'}
+              </p>
+              <p className="text-sm text-[#7e7385] mt-1">
+                {progress === 100
+                  ? 'Vous avez complété toutes les leçons. Validez votre apprentissage avec le quiz.'
+                  : `Terminez les ${totalLessons} leçons du module pour débloquer le quiz.`}
+              </p>
+              {progress > 0 && progress < 100 && (
+                <p className="text-xs text-[#8127cf] font-medium mt-2">
+                  {completedCount}/{totalLessons} leçons complétées — encore{' '}
+                  {totalLessons - completedCount} pour débloquer le quiz.
+                </p>
+              )}
+            </div>
+
+            {/* Bouton */}
+            {progress === 100 ? (
+              <Link
+                to={ROUTES.QUIZ(id)}
+                className="flex-shrink-0 flex items-center gap-2 px-8 py-3 rounded-xl text-white
+                           font-bold text-sm transition-all hover:shadow-lg hover:shadow-[#8127cf]/20
+                           active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #ec4899 0%, #8127cf 100%)' }}
+              >
+                <span className="material-symbols-outlined text-[18px]">play_circle</span>
+                Commencer le quiz
+              </Link>
+            ) : (
+              <div className="flex-shrink-0 flex items-center gap-2 px-8 py-3 rounded-xl
+                              bg-[#e5eeff] text-[#7e7385] font-bold text-sm cursor-not-allowed">
+                <span className="material-symbols-outlined text-[18px]">lock</span>
+                Verrouillé
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

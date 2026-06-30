@@ -15,7 +15,7 @@ export default function ARIAButton() {
     { 
       id: 1, 
       sender: 'aria', 
-      text: "Marhaban! 🇲🇦 Je suis ARIA, votre assistante d'apprentissage IA. Comment puis-je vous aider aujourd'hui dans votre parcours ?",
+      text: "Bonjour! 🇲🇦 Je suis ARIA, votre assistante d'apprentissage IA. Comment puis-je vous aider aujourd'hui dans votre parcours ?",
       time: '12:30' 
     }
   ]);
@@ -42,7 +42,7 @@ export default function ARIAButton() {
       return "Nos certificats d'IA sont accrédités par l'IAAI Maroc. Complétez tous les quiz d'un parcours avec un score > 80% pour débloquer votre certificat téléchargeable et partageable sur LinkedIn !";
     }
     if (text.includes('d Darija') || text.includes('darija') || text.includes('maroc')) {
-      return "Absolument ! Tous nos modèles et explications d'IA incluent des exemples contextualisés pour le Maroc, et nous lançons très bientôt des cours sur le NLP appliqué au dialecte Darija marocain ! 🚀";
+      return "Absolument ! Tous nos modèles et explications d'IA incluent des exemples contextualisés pour le Maroc, et nous lançons très bientôt des cours sur le NLP appliqué au dialecte Darija marocain !";
     }
     if (text.includes('payant') || text.includes('gratuit') || text.includes('prix') || text.includes('illimité')) {
       return "Vous êtes actuellement sur le Plan Gratuit. Pour débloquer l'accès à nos calculateurs GPU cloud, des quiz avancés et des certifications officielles, vous pouvez passer au plan Illimité pour seulement 149 DH/mois !";

@@ -7,7 +7,7 @@ const steps = [
     eyebrow: 'Étape 1 sur 3',
     title: 'Bienvenue sur IAAI eLearning 101 !',
     text: "La plateforme marocaine pour apprendre l'IA de zéro.",
-    chips: ['7 modules', '38 leçons', 'Certifié'],
+    chips: ['8 modules', '38 leçons', 'Certifié'],
     button: 'Commencer',
     next: ROUTES.ONBOARDING_2,
   },

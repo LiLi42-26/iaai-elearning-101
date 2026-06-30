@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { register } from '@/services/authService'
 import { ROUTES } from '@/constants/routes'
 import logo from '@/assets/logo-iaai.png'
+import AuthVisual from '@/components/ui/AuthVisual'
 
 function RegisterPage() {
   const navigate = useNavigate()
@@ -208,15 +209,15 @@ function RegisterPage() {
           </section>
 
           {/* Illustration */}
-          <section className="hidden lg:flex relative aspect-square items-center justify-center">
-            <div className="absolute top-1/4 -right-10 w-64 h-64 bg-pink-500/10 blur-[100px] rounded-full" />
-            <div className="absolute bottom-1/4 -left-10 w-64 h-64 bg-cyan-500/10 blur-[100px] rounded-full" />
-            <div className="w-full h-full max-w-[500px] max-h-[500px] rounded-3xl shadow-2xl overflow-hidden
-                            bg-gradient-to-br from-purple-400 via-pink-400 to-cyan-400
-                            flex items-center justify-center">
-              <span className="text-white/30 text-9xl font-display font-bold">IA</span>
-            </div>
-          </section>
+          <AuthVisual
+            topBadge={{ icon: 'auto_awesome', label: 'IA Apprenante' }}
+            bottomCard={{
+              icon: 'shield',
+              iconBg: 'bg-fuchsia-600',
+              title: 'Gratuit pour commencer',
+              subtitle: 'Aucune carte bancaire',
+            }}
+          />
 
         </div>
       </main>

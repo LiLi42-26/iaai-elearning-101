@@ -49,7 +49,7 @@ export default function PaymentSuccessPage() {
 
         {/* ── Titre ────────────────────────────────────────────────────────── */}
         <h1 className="text-2xl font-bold font-display text-[#0b1c30] mb-2">
-          Paiement réussi ! 🎉
+          Paiement réussi !
         </h1>
         <p className="text-[#68627a] text-sm mb-6">
           Bienvenue dans le plan Premium. Votre accès à l'intégralité du parcours IA est maintenant actif.
@@ -58,7 +58,7 @@ export default function PaymentSuccessPage() {
         {/* ── Ce qui est débloqué ──────────────────────────────────────────── */}
         <div className="bg-[#f8f5ff] rounded-2xl p-5 mb-6 text-left space-y-3">
           {[
-            'Modules 2 à 7 débloqués',
+            'Modules 2 à 8 débloqués',
             'Certificat de complétion disponible',
             'Assistant ARIA illimité',
             'Projets pratiques guidés',

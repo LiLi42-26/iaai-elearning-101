@@ -227,8 +227,12 @@ export default function QuizPage() {
             {bestScore && (
               <div className="w-full mb-6 px-6 py-3 bg-[#f0dbff] rounded-xl flex items-center justify-between">
                 <span className="text-sm text-[#4d4354]">Votre meilleur score</span>
-                <span className={`font-bold text-sm ${bestScore.passed ? 'text-green-600' : 'text-[#8127cf]'}`}>
-                  {bestScore.score}% {bestScore.passed ? '✓ Réussi' : '✗ Échoué'}
+                <span className={`font-bold text-sm flex items-center gap-1 ${bestScore.passed ? 'text-green-600' : 'text-[#8127cf]'}`}>
+                  {bestScore.score}%{' '}
+                  <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    {bestScore.passed ? 'check_circle' : 'cancel'}
+                  </span>
+                  {bestScore.passed ? 'Réussi' : 'Échoué'}
                 </span>
               </div>
             )}

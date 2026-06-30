@@ -107,8 +107,9 @@ function VerifyEmailPage() {
 
         {/* Succès renvoi */}
         {resent && (
-          <div className="mt-4 px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-green-600 text-sm text-center">
-            Code renvoyé avec succès ✅
+          <div className="mt-4 px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-green-600 text-sm text-center flex items-center justify-center gap-2">
+            <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+            Code renvoyé avec succès
           </div>
         )}
 

@@ -63,7 +63,7 @@ export default function ARIAFloatingAssistant({ lessonId = null, moduleId = null
   const [open, setOpen]         = useState(false)
   const [messages, setMessages] = useState([{
     id: 1, from: 'aria',
-    text: `Marhaban ! 🌟 Je suis ARIA, votre assistante pédagogique IA.\n${lessonTitle ? `Je suis contextualisée sur : "${lessonTitle}".` : 'Posez-moi vos questions sur le cours.'}`,
+    text: `Bonjour !  Je suis ARIA, votre assistante pédagogique IA.\n${lessonTitle ? `Je suis contextualisée sur : "${lessonTitle}".` : 'Posez-moi vos questions sur le cours.'}`,
     time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
   }])
   const [input,     setInput]     = useState('')
