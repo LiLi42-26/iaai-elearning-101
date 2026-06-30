@@ -47,9 +47,10 @@ function RegisterPage() {
       })
       localStorage.setItem('iaai-pending-email', form.email)
       navigate(ROUTES.VERIFY_EMAIL)
-    } catch {
-      setError(error.message || 'Une erreur est survenue.')
-    } finally {
+    } catch (error) {
+  console.error('REGISTER ERROR:', error)
+  setError(error?.message || 'Une erreur est survenue.')
+  } finally {
       setIsLoading(false)
     }
   }
