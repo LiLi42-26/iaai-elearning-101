@@ -45,7 +45,7 @@ export default function ARIAButton() {
       return "Absolument ! Tous nos modèles et explications d'IA incluent des exemples contextualisés pour le Maroc, et nous lançons très bientôt des cours sur le NLP appliqué au dialecte Darija marocain !";
     }
     if (text.includes('payant') || text.includes('gratuit') || text.includes('prix') || text.includes('illimité')) {
-      return "Vous êtes actuellement sur le Plan Gratuit. Pour débloquer l'accès à nos calculateurs GPU cloud, des quiz avancés et des certifications officielles, vous pouvez passer au plan Illimité pour seulement 149 DH/mois !";
+      return "Vous êtes actuellement sur le Plan Gratuit. Pour débloquer l'accès à nos calculateurs GPU cloud, des quiz avancés et des certifications officielles, vous pouvez passer au plan Illimité pour seulement 299 DH/mois !";
     }
     if (text.includes('quiz') || text.includes('examen')) {
       return "Chaque module se termine par un Quiz interactif de 5 à 10 questions. N'hésitez pas à relire le syllabus du module et à vous exercer sur les notions de base !";

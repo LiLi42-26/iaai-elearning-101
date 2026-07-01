@@ -143,7 +143,7 @@ const plans = [
   },
   {
     name: 'Illimité',
-    price: '149 MAD/mois',
+    price: '299 MAD/mois',
     cta: 'Commencer maintenant',
     highlighted: true,
     items: ["Accès à tous les modules", 'Quiz et progression', 'Certificat téléchargeable', 'Ressources incluses'],
