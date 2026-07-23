@@ -144,15 +144,16 @@ export async function deleteQuiz(quizId) {
 
 // ─── CRUD Questions (Admin) ───────────────────────────────────────────────────
 
+// Admin uniquement : renvoie les questions AVEC la clé de correction
+// (answers.is_correct). La colonne is_correct n'est plus lisible directement
+// via PostgREST (REVOKE côté base) pour empêcher la triche ; elle n'est
+// exposée qu'ici, via une fonction SECURITY DEFINER qui vérifie is_admin().
 export async function getQuestionsByQuiz(quizId) {
   const { data, error } = await supabase
-    .from('questions')
-    .select('*, answers(*)')
-    .eq('quiz_id', quizId)
-    .order('order_index', { ascending: true })
+    .rpc('admin_get_quiz_questions', { p_quiz_id: quizId })
 
   if (error) throw error
-  return data
+  return data ?? []
 }
 
 export async function createQuestion(questionData) {
@@ -205,7 +206,9 @@ export async function createAnswer(answerData) {
       answer_text: answerData.answer_text,
       is_correct: answerData.is_correct || false,
     })
-    .select()
+    // is_correct n'est plus lisible via PostgREST (anti-triche) : ne pas le
+    // renvoyer dans la représentation, sinon PostgREST lève une erreur de droit.
+    .select('id, question_id, answer_text')
     .single()
 
   if (error) throw error
@@ -220,7 +223,7 @@ export async function updateAnswer(answerId, answerData) {
       is_correct: answerData.is_correct,
     })
     .eq('id', answerId)
-    .select()
+    .select('id, question_id, answer_text')
     .single()
 
   if (error) throw error
