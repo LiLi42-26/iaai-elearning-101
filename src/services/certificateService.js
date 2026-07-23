@@ -98,3 +98,16 @@ export async function getUserCertificates(userId) {
   if (error) throw error
   return data || []
 }
+
+// ─── Vérification publique d'un certificat par son numéro ────────────────────
+//
+// Utilisée par la page publique /verify/:number (accessible sans connexion).
+// Passe par une RPC SECURITY DEFINER qui n'expose que des champs non sensibles
+// (nom du titulaire, numéro, score, date) — jamais l'email ni l'user_id.
+export async function verifyCertificate(certNumber) {
+  const { data, error } = await supabase
+    .rpc('verify_certificate', { p_cert_number: certNumber })
+
+  if (error) throw error
+  return data || null
+}

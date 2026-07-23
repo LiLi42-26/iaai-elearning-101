@@ -34,6 +34,7 @@ export const ROUTES = {
   // Certificates
   CERTIFICATES: '/certificates',
   CERTIFICATE_DETAIL: (id) => `/certificates/${id}`,
+  VERIFY_CERTIFICATE: (num) => `/verify/${num}`,
 
   // Community
   COMMUNITY: '/community',

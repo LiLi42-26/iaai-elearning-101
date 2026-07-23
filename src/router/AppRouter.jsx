@@ -38,6 +38,7 @@ const LessonPage         = lazy(() => import('@/pages/Learning/LessonPage'))
 const QuizPage           = lazy(() => import('@/pages/Quiz/QuizPage'))
 const QuizResultPage     = lazy(() => import('@/pages/Quiz/QuizResultPage'))
 const CertificatesPage   = lazy(() => import('@/pages/Certificates/CertificatesPage'))
+const VerifyCertificatePage = lazy(() => import('@/pages/Certificates/VerifyCertificatePage'))
 const ProfilePage        = lazy(() => import('@/pages/Profile/ProfilePage'))
 const BookmarksPage       = lazy(() => import('@/pages/Profile/BookmarksPage'))
 const NotificationsPage  = lazy(() => import('@/pages/Notifications/NotificationsPage'))
@@ -83,6 +84,9 @@ function AppRouter() {
           <Route element={<PublicLayout />}>
             <Route path={ROUTES.HOME} element={<LandingPage />} />
           </Route>
+
+          {/* Vérification publique de certificat (sans layout ni auth) */}
+          <Route path="/verify/:certNumber" element={<VerifyCertificatePage />} />
 
           {/* AUTH */}
           <Route element={<AuthLayout />}>

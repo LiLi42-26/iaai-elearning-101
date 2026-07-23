@@ -136,10 +136,33 @@ export default function CertificatesPage() {
 
   const handleCopyLink = () => {
     if (!certificate) return
-    navigator.clipboard.writeText(`${window.location.origin}/verify/${certificate.certificate_number}`)
+    navigator.clipboard.writeText(`${window.location.origin}${ROUTES.VERIFY_CERTIFICATE(certificate.certificate_number)}`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
+  // Ouvre le flux LinkedIn « Ajouter à mon profil » pré-rempli avec le certificat.
+  const handleShareLinkedIn = () => {
+    if (!certificate) return
+    const issued = new Date(certificate.issued_at)
+    const certUrl = `${window.location.origin}${ROUTES.VERIFY_CERTIFICATE(certificate.certificate_number)}`
+    const params = new URLSearchParams({
+      startTask: 'CERTIFICATION_NAME',
+      name: 'AI Foundations 101 — Intelligence Artificielle',
+      organizationName: 'IAAI Academy',
+      issueYear: String(issued.getFullYear()),
+      issueMonth: String(issued.getMonth() + 1),
+      certId: certificate.certificate_number,
+      certUrl,
+    })
+    window.open(
+      `https://www.linkedin.com/profile/add?${params.toString()}`,
+      '_blank',
+      'noopener,noreferrer',
+    )
+  }
+
+  const handleDownloadPdf = () => window.print()
 
   if (loading) return <CertSkeleton />
   if (!certificate) return <EmptyState eligibility={eligibility} />
@@ -183,7 +206,7 @@ export default function CertificatesPage() {
 
         {/* ── Colonne gauche : Certificat (60%) ──────────────────────────────── */}
         <div className="w-full lg:w-[60%]">
-          <div className="relative bg-white rounded-2xl shadow-xl border-2 border-yellow-400/60 p-8 md:p-12 overflow-hidden">
+          <div id="certificate-print" className="relative bg-white rounded-2xl shadow-xl border-2 border-yellow-400/60 p-8 md:p-12 overflow-hidden">
 
             {/* Badge OBTENU */}
             <span className="absolute top-5 right-5 flex items-center gap-1 px-3 py-1.5 rounded-full bg-yellow-400 text-yellow-950 text-xs font-bold z-10">
@@ -287,14 +310,19 @@ export default function CertificatesPage() {
               Partager
             </h4>
             <div className="flex flex-col gap-3">
-              <button className="w-full bg-[#0077B5] text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+              <button
+                onClick={handleShareLinkedIn}
+                className="w-full bg-[#0077B5] text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all"
+              >
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                   <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                 </svg>
                 Partager sur LinkedIn
               </button>
-              <button className="w-full text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:shadow-md transition-all"
-                      style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}>
+              <button
+                onClick={handleDownloadPdf}
+                className="w-full text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:shadow-md transition-all"
+                style={{ background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)' }}>
                 <span className="material-symbols-outlined text-[18px]">download</span>
                 Télécharger en PDF
               </button>
