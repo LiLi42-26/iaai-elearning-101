@@ -136,7 +136,7 @@ export default function CertificatesPage() {
 
   const handleCopyLink = () => {
     if (!certificate) return
-    navigator.clipboard.writeText(`${window.location.origin}/verify/${certificate.certificate_number}`)
+    navigator.clipboard.writeText(`${window.location.origin}${ROUTES.VERIFY_CERTIFICATE(certificate.certificate_number)}`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -145,7 +145,7 @@ export default function CertificatesPage() {
   const handleShareLinkedIn = () => {
     if (!certificate) return
     const issued = new Date(certificate.issued_at)
-    const certUrl = `${window.location.origin}/verify/${certificate.certificate_number}`
+    const certUrl = `${window.location.origin}${ROUTES.VERIFY_CERTIFICATE(certificate.certificate_number)}`
     const params = new URLSearchParams({
       startTask: 'CERTIFICATION_NAME',
       name: 'AI Foundations 101 — Intelligence Artificielle',
@@ -206,7 +206,7 @@ export default function CertificatesPage() {
 
         {/* ── Colonne gauche : Certificat (60%) ──────────────────────────────── */}
         <div className="w-full lg:w-[60%]">
-          <div className="relative bg-white rounded-2xl shadow-xl border-2 border-yellow-400/60 p-8 md:p-12 overflow-hidden">
+          <div id="certificate-print" className="relative bg-white rounded-2xl shadow-xl border-2 border-yellow-400/60 p-8 md:p-12 overflow-hidden">
 
             {/* Badge OBTENU */}
             <span className="absolute top-5 right-5 flex items-center gap-1 px-3 py-1.5 rounded-full bg-yellow-400 text-yellow-950 text-xs font-bold z-10">
