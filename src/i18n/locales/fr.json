@@ -9,7 +9,9 @@
     "logout": "Déconnexion",
     "upgrade": "Passer à Illimité",
     "search": "Rechercher un cours...",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "catalogue": "Catalogue",
+    "open_menu": "Ouvrir le menu"
   },
   "auth": {
     "login": {
@@ -81,21 +83,33 @@
       "eyebrow": "Étape 1 sur 3",
       "title": "Bienvenue sur IAAI eLearning 101 !",
       "text": "La plateforme marocaine pour apprendre l'IA de zéro.",
-      "chips": ["8 modules", "38 leçons", "Certifié"],
+      "chips": [
+        "8 modules",
+        "38 leçons",
+        "Certifié"
+      ],
       "button": "Commencer"
     },
     "step2": {
       "eyebrow": "Étape 2 sur 3",
       "title": "Quel est votre niveau actuel ?",
       "text": "Nous adapterons le parcours recommandé selon votre point de départ.",
-      "chips": ["Débutant", "Quelques bases", "À l'aise"],
+      "chips": [
+        "Débutant",
+        "Quelques bases",
+        "À l'aise"
+      ],
       "button": "Continuer"
     },
     "step3": {
       "eyebrow": "Étape 3 sur 3",
       "title": "Quel est votre objectif principal ?",
       "text": "Choisissez ce qui vous motive pour apprendre avec plus de clarté.",
-      "chips": ["Carrière", "Études", "Culture IA"],
+      "chips": [
+        "Carrière",
+        "Études",
+        "Culture IA"
+      ],
       "button": "Aller au dashboard"
     },
     "skip": "Passer l'introduction"
@@ -285,5 +299,24 @@
     "nav_pricing": "Tarifs",
     "nav_faq": "FAQ",
     "login": "Connexion"
+  },
+  "catalogue": {
+    "title": "Catalogue des cours",
+    "subtitle": "Explorez tous les modules disponibles et commencez votre parcours en IA",
+    "search_placeholder": "Rechercher un module...",
+    "filter_all": "Tous",
+    "filter_free": "Gratuit",
+    "filter_premium": "Premium",
+    "lessons_count": "{{count}} leçons",
+    "duration": "~{{duration}} min",
+    "free_badge": "Gratuit",
+    "premium_badge": "Premium",
+    "start_button": "Commencer",
+    "continue_button": "Continuer",
+    "review_button": "Revoir",
+    "unlock_button": "Débloquer",
+    "empty_state": "Aucun module ne correspond à votre recherche.",
+    "empty_title": "Aucun cours pour le moment",
+    "empty_subtitle": "Les cours seront bientôt disponibles."
   }
 }

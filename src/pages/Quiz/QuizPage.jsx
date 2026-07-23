@@ -1,5 +1,5 @@
 // src/pages/Quiz/QuizPage.jsx
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { useAuthStore } from '@/store/authStore'
@@ -78,45 +78,16 @@ export default function QuizPage() {
     load()
   }, [id, user?.id])
 
-  // Synchroniser les refs à chaque render pour que le timer ait toujours les valeurs fraîches
-  answersRef.current  = answers
-  selectedRef.current = selected
-
-  // ── Timer (démarre quand phase = questions) ─────────────────────────────────
-  useEffect(() => {
-    if (phase !== 'questions') return
-    timerRef.current = setInterval(() => {
-      setTimeLeft(t => {
-        if (t <= 1) {
-          clearInterval(timerRef.current)
-          handleFinish([...answersRef.current, { questionId: null, answerId: selectedRef.current }])
-          return 0
-        }
-        return t - 1
-      })
-    }, 1000)
-    return () => clearInterval(timerRef.current)
-  }, [phase])
+  // Synchroniser les refs quand les valeurs changent (jamais pendant le render)
+  useEffect(() => { answersRef.current = answers }, [answers])
+  useEffect(() => { selectedRef.current = selected }, [selected])
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleStart = () => setPhase('questions')
 
   const handleAnswer = (answerId) => setSelected(answerId)
 
-  const handleNext = () => {
-    const question = quiz.questions[currentQ]
-    const newAnswers = [...answers, { questionId: question.id, answerId: selected }]
-
-    if (currentQ + 1 >= quiz.questions.length) {
-      handleFinish(newAnswers)
-    } else {
-      setAnswers(newAnswers)
-      setCurrentQ(currentQ + 1)
-      setSelected(null)
-    }
-  }
-
-  const handleFinish = async (finalAnswers) => {
+  const handleFinish = useCallback(async (finalAnswers) => {
     // Bloquer toute soumission simultanée (timer + clic "Terminer" en même temps)
     if (isSubmittingRef.current) return
     isSubmittingRef.current = true
@@ -153,7 +124,36 @@ export default function QuizPage() {
       isSubmittingRef.current = false
       setPhase('questions')
     }
+  }, [user?.id, quiz, id, navigate])
+
+  const handleNext = () => {
+    const question = quiz.questions[currentQ]
+    const newAnswers = [...answers, { questionId: question.id, answerId: selected }]
+
+    if (currentQ + 1 >= quiz.questions.length) {
+      handleFinish(newAnswers)
+    } else {
+      setAnswers(newAnswers)
+      setCurrentQ(currentQ + 1)
+      setSelected(null)
+    }
   }
+
+  // ── Timer (démarre quand phase = questions) ─────────────────────────────────
+  useEffect(() => {
+    if (phase !== 'questions') return
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current)
+          handleFinish([...answersRef.current, { questionId: null, answerId: selectedRef.current }])
+          return 0
+        }
+        return t - 1
+      })
+    }, 1000)
+    return () => clearInterval(timerRef.current)
+  }, [phase, handleFinish])
 
   // ── Format timer ─────────────────────────────────────────────────────────────
   const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`

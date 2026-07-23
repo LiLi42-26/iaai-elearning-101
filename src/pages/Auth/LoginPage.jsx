@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { login } from '@/services/authService'
 import { useAuthStore } from '@/store/authStore'
 import { ROUTES } from '@/constants/routes'
-import logo from '@/assets/logo-iaai.png'
+import AuthHeader from '@/components/ui/AuthHeader'
 import AuthVisual from '@/components/ui/AuthVisual'
 
 function LoginPage() {
@@ -39,20 +39,22 @@ function LoginPage() {
         password: form.password,
       })
 
-      setUser(
-        {
-          id: data.user.id,
-          email: data.user.email,
-          fullName: data.user.user_metadata?.full_name || '',
-          role: data.user.user_metadata?.role || 'LEARNER',
-          isOnboardingComplete: true,
-        },
-        data.session.access_token
-      )
+      await setUser({
+        id: data.user.id,
+        email: data.user.email,
+        fullName: data.user.user_metadata?.full_name || '',
+        role: data.user.user_metadata?.role || 'LEARNER',
+        isOnboardingComplete: true,
+      })
 
       navigate(from, { replace: true })
-    } catch {
-      setError('Email ou mot de passe incorrect.')
+    } catch (err) {
+      if (err?.code === 'ACCOUNT_LOCKED') {
+        const minutes = Math.max(1, Math.ceil((err.retryAfterSeconds ?? 0) / 60))
+        setError(`Trop de tentatives échouées. Réessayez dans ${minutes} min.`)
+      } else {
+        setError('Email ou mot de passe incorrect.')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -61,13 +63,10 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-[#f8f5ff] font-sans antialiased">
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center px-6 md:px-10 py-4">
-        <img src={logo} alt="IAAI eLearning 101" className="h-14 object-contain" />
-      </header>
+      <AuthHeader />
 
       {/* Main */}
-      <main className="min-h-screen flex items-center justify-center pt-20 pb-12">
+      <main className="flex items-center justify-center pb-12 px-2">
         <div className="w-full max-w-[1200px] px-6 md:px-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
           {/* Formulaire */}
@@ -104,7 +103,7 @@ function LoginPage() {
                   placeholder="amina@exemple.ma"
                   required
                   className="w-full px-5 py-4 rounded-xl border border-[#f0f0f5] bg-white text-[#0b1c30] text-base
-                             focus:border-[#6d28d9] focus:ring-4 focus:ring-[#6d28d9]/10 focus:outline-none transition-all"
+                             focus:border-[#8127cf] focus:ring-4 focus:ring-[#8127cf]/10 focus:outline-none transition-all"
                 />
               </div>
 
@@ -116,7 +115,7 @@ function LoginPage() {
                   </label>
                   <Link
                     to={ROUTES.FORGOT_PASSWORD}
-                    className="text-sm text-violet-700 hover:underline"
+                    className="text-sm text-[#8127cf] font-semibold hover:underline"
                   >
                     Mot de passe oublié ?
                   </Link>
@@ -130,12 +129,12 @@ function LoginPage() {
                     placeholder="••••••••"
                     required
                     className="w-full px-5 py-4 rounded-xl border border-[#f0f0f5] bg-white text-[#0b1c30] text-base
-                               focus:border-[#6d28d9] focus:ring-4 focus:ring-[#6d28d9]/10 focus:outline-none transition-all pr-12"
+                               focus:border-[#8127cf] focus:ring-4 focus:ring-[#8127cf]/10 focus:outline-none transition-all pr-12"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7e7385] hover:text-[#6d28d9] transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7e7385] hover:text-[#8127cf] transition-colors"
                   >
                     <span className="material-symbols-outlined text-[20px]">
                       {showPassword ? 'visibility_off' : 'visibility'}
@@ -168,7 +167,7 @@ function LoginPage() {
 
             <p className="text-base text-[#4d4354] text-center lg:text-left">
               Pas encore de compte ?{' '}
-              <Link to={ROUTES.REGISTER} className="text-[#6d28d9] font-bold hover:underline">
+              <Link to={ROUTES.REGISTER} className="text-[#8127cf] font-bold hover:underline">
                 Créer un compte gratuit
               </Link>
             </p>

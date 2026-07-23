@@ -1,0 +1,331 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "curriculum": "Mon Parcours IA",
+    "certificates": "Mes Certificats",
+    "community": "Communauté",
+    "settings": "Paramètres",
+    "profile": "Mon Profil",
+    "logout": "Déconnexion",
+    "upgrade": "Passer à Illimité",
+    "search": "Rechercher un cours...",
+    "notifications": "Notifications",
+    "catalogue": "Catalogue",
+    "open_menu": "Ouvrir le menu"
+  },
+  "auth": {
+    "login": {
+      "title": "Bon retour parmi nous",
+      "subtitle": "Connectez-vous pour continuer votre parcours IA",
+      "email": "Votre email",
+      "password": "Mot de passe",
+      "forgot": "Mot de passe oublié ?",
+      "submit": "Se connecter",
+      "loading": "Connexion...",
+      "no_account": "Pas encore de compte ?",
+      "create_account": "Créer un compte gratuit",
+      "error": "Email ou mot de passe incorrect."
+    },
+    "register": {
+      "title": "Créez votre compte gratuit",
+      "subtitle": "Rejoignez 2 400 apprenants au Maroc et ailleurs",
+      "full_name": "Votre nom complet",
+      "full_name_placeholder": "Ex : Amina Alami",
+      "email": "Votre email",
+      "email_placeholder": "amina@exemple.ma",
+      "password": "Créez un mot de passe",
+      "confirm_password": "Confirmez votre mot de passe",
+      "submit": "Créer mon compte",
+      "loading": "Création...",
+      "already_account": "Déjà un compte ?",
+      "login": "Se connecter",
+      "error_passwords": "Les mots de passe ne correspondent pas.",
+      "error_length": "Le mot de passe doit contenir au moins 6 caractères.",
+      "error_generic": "Une erreur est survenue."
+    },
+    "verify": {
+      "title": "Vérifiez votre email",
+      "subtitle": "Un code à 6 chiffres a été envoyé à",
+      "submit": "Vérifier mon compte",
+      "resend": "Renvoyer",
+      "no_code": "Vous n'avez pas reçu le code ?",
+      "resent": "Code renvoyé avec succès ✅",
+      "error_length": "Le code doit contenir 6 chiffres.",
+      "error_invalid": "Code invalide ou expiré. Vérifiez votre email.",
+      "error_resend": "Impossible de renvoyer le code."
+    },
+    "forgot": {
+      "title": "Mot de passe oublié ?",
+      "subtitle": "Entrez votre email et nous vous enverrons un lien de réinitialisation.",
+      "email": "Votre email",
+      "submit": "Envoyer le lien",
+      "loading": "Envoi...",
+      "back_to_login": "Retour à la connexion",
+      "success_title": "Email envoyé !",
+      "success_desc": "Vérifiez votre boîte mail. Le lien expire dans 1 heure.",
+      "error": "Aucun compte associé à cet email."
+    },
+    "reset": {
+      "title": "Nouveau mot de passe",
+      "subtitle": "Choisissez un nouveau mot de passe sécurisé.",
+      "new_password": "Nouveau mot de passe",
+      "confirm_password": "Confirmez le mot de passe",
+      "submit": "Réinitialiser",
+      "loading": "Réinitialisation...",
+      "success": "Mot de passe mis à jour ! Vous pouvez vous connecter.",
+      "error_passwords": "Les mots de passe ne correspondent pas.",
+      "error_length": "Le mot de passe doit contenir au moins 6 caractères.",
+      "error_generic": "Le lien est invalide ou expiré."
+    },
+    "password_policy": {
+      "rule_length": "Le mot de passe doit contenir au moins 10 caractères.",
+      "rule_lowercase": "Le mot de passe doit contenir au moins une minuscule.",
+      "rule_uppercase": "Le mot de passe doit contenir au moins une majuscule.",
+      "rule_digit": "Le mot de passe doit contenir au moins un chiffre.",
+      "rule_special": "Le mot de passe doit contenir au moins un caractère spécial.",
+      "rule_common": "Ce mot de passe est trop courant, choisissez-en un autre.",
+      "rule_contains_identity": "Le mot de passe ne doit pas contenir votre nom ou votre email."
+    }
+  },
+  "onboarding": {
+    "step1": {
+      "eyebrow": "Étape 1 sur 3",
+      "title": "Bienvenue sur IAAI eLearning 101 !",
+      "text": "La plateforme marocaine pour apprendre l'IA de zéro.",
+      "chips": [
+        "8 modules",
+        "38 leçons",
+        "Certifié"
+      ],
+      "button": "Commencer"
+    },
+    "step2": {
+      "eyebrow": "Étape 2 sur 3",
+      "title": "Quel est votre niveau actuel ?",
+      "text": "Nous adapterons le parcours recommandé selon votre point de départ.",
+      "chips": [
+        "Débutant",
+        "Quelques bases",
+        "À l'aise"
+      ],
+      "button": "Continuer"
+    },
+    "step3": {
+      "eyebrow": "Étape 3 sur 3",
+      "title": "Quel est votre objectif principal ?",
+      "text": "Choisissez ce qui vous motive pour apprendre avec plus de clarté.",
+      "chips": [
+        "Carrière",
+        "Études",
+        "Culture IA"
+      ],
+      "button": "Aller au dashboard"
+    },
+    "skip": "Passer l'introduction"
+  },
+  "dashboard": {
+    "greeting": "Bonjour {{name}}",
+    "subtitle": "Vous faites d'excellents progrès. Continuez ainsi !",
+    "progress_label": "Progression du cours",
+    "progress_value": "{{percent}}% ({{done}}/{{total}} leçons)",
+    "continue_btn": "Continuer le parcours",
+    "stats": {
+      "study_time": "Temps d'étude",
+      "lessons": "Leçons finies",
+      "quizzes": "Quiz réussis",
+      "badges": "Badges gagnés"
+    },
+    "roadmap_title": "Votre roadmap",
+    "activity_title": "Activité récente",
+    "recommendations_title": "Recommandé pour vous",
+    "status": {
+      "done": "Terminé",
+      "active": "En cours",
+      "locked": "Verrouillé"
+    }
+  },
+  "curriculum": {
+    "title": "Mon Parcours IA",
+    "subtitle": "AI Foundations 101 — 8 modules · 38 leçons",
+    "unlock_after": "Terminez le module précédent pour débloquer",
+    "continue": "Continuer",
+    "start": "Commencer",
+    "locked": "Verrouillé",
+    "done": "Terminé",
+    "active": "En cours",
+    "lesson": "leçon",
+    "lessons": "leçons"
+  },
+  "lesson": {
+    "back": "Retour au module",
+    "lesson_of": "Leçon {{current}} / {{total}}",
+    "plan": "Plan de la leçon",
+    "tip": "💡 Astuce",
+    "try_code": "Essayer le code",
+    "run": "Exécuter",
+    "output": "Sortie",
+    "prev": "Leçon précédente",
+    "next": "Leçon suivante"
+  },
+  "quiz": {
+    "title": "Quiz",
+    "question_of": "Question {{current}} / {{total}}",
+    "validate": "Valider",
+    "next": "Question suivante",
+    "finish": "Terminer le quiz",
+    "result_title": "Résultat du quiz",
+    "score": "Score : {{score}}%",
+    "passed": "Réussi ✅",
+    "failed": "À reessayer ❌",
+    "retry": "Réessayer",
+    "back_to_module": "Retour au module"
+  },
+  "certificates": {
+    "title": "Mes Certificats",
+    "subtitle": "Vos réussites certifiées",
+    "download": "Télécharger",
+    "share": "Partager",
+    "empty": "Aucun certificat pour l'instant. Terminez un module pour en obtenir un !"
+  },
+  "community": {
+    "title": "Communauté",
+    "new_post": "Nouveau sujet",
+    "search": "Rechercher une discussion...",
+    "members_online": "Membres en ligne",
+    "trending": "Tendances",
+    "replies": "réponses",
+    "views": "vues",
+    "vote": "Voter"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "mark_all": "Tout marquer comme lu",
+    "empty": "Aucune notification",
+    "new": "Nouveau"
+  },
+  "profile": {
+    "title": "Mon Profil",
+    "edit": "Modifier",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "full_name": "Nom complet",
+    "email": "Email",
+    "bio": "Biographie",
+    "location": "Ville",
+    "joined": "Membre depuis",
+    "progress": "Progression",
+    "badges": "Badges"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Gérez vos préférences et votre compte.",
+    "account": "Compte",
+    "change_password": "Modifier le mot de passe",
+    "notifications": "Notifications",
+    "email_notifs": "Notifications par email",
+    "push_notifs": "Notifications push",
+    "language": "Langue",
+    "language_fr": "Français",
+    "language_ar": "العربية",
+    "danger_zone": "Zone dangereuse",
+    "delete_account": "Supprimer mon compte",
+    "save": "Enregistrer"
+  },
+  "upgrade": {
+    "title": "Passez à Illimité",
+    "subtitle": "Accédez à tout le contenu IAAI eLearning 101",
+    "popular": "Populaire",
+    "best_value": "Meilleur rapport",
+    "current": "Plan actuel",
+    "subscribe": "Choisir ce plan",
+    "per_month": "/mois",
+    "free": "À jamais"
+  },
+  "admin": {
+    "nav": {
+      "overview": "Vue d'ensemble",
+      "users": "Utilisateurs",
+      "courses": "Cours",
+      "analytics": "Statistiques",
+      "settings": "Paramètres"
+    },
+    "home": {
+      "title": "Tableau de bord admin",
+      "kpi_users": "Total Utilisateurs",
+      "kpi_subscriptions": "Abonnements Actifs",
+      "kpi_revenue": "Revenu Mensuel",
+      "kpi_success_rate": "Taux de Réussite"
+    },
+    "users": {
+      "title": "Gestion des utilisateurs",
+      "search": "Rechercher un utilisateur...",
+      "add": "Ajouter un utilisateur",
+      "role": "Rôle",
+      "plan": "Plan",
+      "last_seen": "Dernière connexion",
+      "progress": "Progression"
+    },
+    "courses": {
+      "title": "Gestion des cours",
+      "add": "Ajouter un cours",
+      "status": "Statut",
+      "published": "Publié",
+      "draft": "Brouillon"
+    }
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "all": "Tous",
+    "yes": "Oui",
+    "no": "Non",
+    "free_plan": "Plan Gratuit",
+    "unlimited_plan": "Illimité",
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "not_found": "Page introuvable",
+    "go_home": "Retour à l'accueil"
+  },
+  "landing": {
+    "hero_title": "Apprenez l'IA",
+    "hero_title_gradient": "de Zéro à Expert",
+    "hero_subtitle": "La première plateforme IA pensée pour les apprenants marocains et francophones. 8 modules · 38 leçons · Certifié.",
+    "hero_cta": "Commencer gratuitement",
+    "hero_login": "Déjà membre ?",
+    "nav_curriculum": "Cursus",
+    "nav_features": "Fonctionnalités",
+    "nav_pricing": "Tarifs",
+    "nav_faq": "FAQ",
+    "login": "Connexion"
+  },
+  "catalogue": {
+    "title": "Catalogue des cours",
+    "subtitle": "Explorez tous les modules disponibles et commencez votre parcours en IA",
+    "search_placeholder": "Rechercher un module...",
+    "filter_all": "Tous",
+    "filter_free": "Gratuit",
+    "filter_premium": "Premium",
+    "lessons_count": "{{count}} leçons",
+    "duration": "~{{duration}} min",
+    "free_badge": "Gratuit",
+    "premium_badge": "Premium",
+    "start_button": "Commencer",
+    "continue_button": "Continuer",
+    "review_button": "Revoir",
+    "unlock_button": "Débloquer",
+    "empty_state": "Aucun module ne correspond à votre recherche.",
+    "empty_title": "Aucun cours pour le moment",
+    "empty_subtitle": "Les cours seront bientôt disponibles."
+  }
+}

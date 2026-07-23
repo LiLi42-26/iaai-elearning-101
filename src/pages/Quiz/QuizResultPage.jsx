@@ -1,13 +1,12 @@
 // src/pages/Quiz/QuizResultPage.jsx
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { useAuthStore } from '@/store/authStore'
-import { generateCertificate } from '@/services/certificateService'
+import { checkCertificateEligibility, generateCertificate } from '@/services/certificateService'
 import { supabase } from '@/services/supabaseClient'
 
 export default function QuizResultPage() {
-  const { id } = useParams()
   const location = useLocation()
   const { user } = useAuthStore()
 
@@ -23,23 +22,35 @@ export default function QuizResultPage() {
 
   const [certGenerated, setCertGenerated] = useState(false)
   const [certLoading, setCertLoading]     = useState(false)
+  const [certEligible, setCertEligible]   = useState(false)
 
-  // ── Générer le certificat si quiz réussi ────────────────────────────────────
+  // ── Générer le certificat SEULEMENT si tout le parcours est terminé ────────
+  //
+  // CORRECTION : auparavant on générait un certificat dès que CE quiz était
+  // réussi, sans vérifier les autres modules. Il n'y a qu'un seul certificat
+  // pour l'ensemble du cursus : on vérifie d'abord l'éligibilité globale
+  // (checkCertificateEligibility), et on ne l'émet que si tous les modules
+  // sont complétés.
   useEffect(() => {
-    if (!passed || !user?.id || !moduleId) return
+    if (!passed || !user?.id) return
 
     const generate = async () => {
       setCertLoading(true)
       try {
-        await generateCertificate(user.id, moduleId)
-        setCertGenerated(true)
+        const { eligible } = await checkCertificateEligibility(user.id)
+        setCertEligible(eligible)
 
-        await supabase.from('user_activity').insert({
-          user_id: user.id,
-          type: 'certificate',
-          title: `Certificat obtenu — ${quizTitle}`,
-          detail: `${scorePercent}%`,
-        })
+        if (eligible) {
+          await generateCertificate(user.id)
+          setCertGenerated(true)
+
+          await supabase.from('user_activity').insert({
+            user_id: user.id,
+            type: 'certificate',
+            title: `Certificat obtenu — parcours complet`,
+            detail: `${scorePercent}%`,
+          })
+        }
       } catch (err) {
         // Certificat déjà existant = pas une erreur bloquante
         setCertGenerated(true)
@@ -50,7 +61,7 @@ export default function QuizResultPage() {
     }
 
     generate()
-  }, [passed, user?.id, moduleId])
+  }, [passed, user?.id, quizTitle, scorePercent])
 
   // ── Animation du score ───────────────────────────────────────────────────────
   const [displayScore, setDisplayScore] = useState(0)
@@ -113,8 +124,9 @@ export default function QuizResultPage() {
             : `Score minimum requis : ${passingScore}% — Vous avez obtenu ${scorePercent}%`}
         </p>
 
-        {/* Badge certificat */}
-        {passed && (
+        {/* Badge certificat — CORRECTION : ne s'affiche que si le parcours */}
+        {/* complet est éligible (ou déjà généré), pas à chaque quiz réussi. */}
+        {passed && (certLoading || certEligible || certGenerated) && (
           <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-6
                           ${certGenerated
                             ? 'bg-green-50 text-green-700 border border-green-200'
@@ -122,7 +134,7 @@ export default function QuizResultPage() {
             <span className="material-symbols-outlined text-[18px]">
               {certGenerated ? 'verified' : certLoading ? 'hourglass_empty' : 'workspace_premium'}
             </span>
-            {certGenerated ? 'Certificat généré !' : certLoading ? 'Génération...' : 'Certificat disponible'}
+            {certGenerated ? 'Certificat généré !' : certLoading ? 'Vérification...' : 'Certificat disponible'}
           </div>
         )}
 

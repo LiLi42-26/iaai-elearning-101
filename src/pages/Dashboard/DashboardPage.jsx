@@ -32,7 +32,7 @@ function EmptyActivity() {
 function StatCard({ stat, loading }) {
   if (loading) {
     return (
-      <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-2xl p-6 border-l-4 border-l-purple-100">
+      <div className="bg-white border border-[#8127cf]/10 shadow-sm rounded-2xl p-6 border-l-4 border-l-purple-100">
         <div className="flex items-center gap-4">
           <Skeleton className="w-12 h-12 rounded-xl" />
           <div className="flex flex-col gap-2">
@@ -45,7 +45,7 @@ function StatCard({ stat, loading }) {
   }
 
   return (
-    <div className={`bg-white/70 backdrop-blur-md border border-white/50 rounded-2xl p-6 border-l-4 ${stat.border}`}>
+    <div className={`bg-white border border-[#8127cf]/10 shadow-sm rounded-2xl p-6 border-l-4 ${stat.border}`}>
       <div className="flex items-center gap-4">
         <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center`}>
           <span className={`material-symbols-outlined ${stat.text}`}>{stat.icon}</span>
@@ -161,7 +161,7 @@ export default function DashboardPage() {
   const activeModule = roadmap.find((m) => m.status === 'active') ?? null
 
   return (
-    <div className="min-h-screen bg-[#f8f5ff] pb-12">
+    <div className="min-h-screen pb-12 theme-transition" style={{ background: 'var(--color-bg)' }}>
 
       {/* ── Row 1 : Welcome Banner + Objectif ───────────────────────────────── */}
       <div className="grid grid-cols-12 gap-6 mb-6">
@@ -222,11 +222,11 @@ export default function DashboardPage() {
 
         {/* Objectif hebdomadaire */}
         <div
-          className="col-span-12 lg:col-span-5 bg-white/70 backdrop-blur-md
-                     border border-white/50 rounded-2xl p-8
-                     flex flex-col items-center justify-center text-center"
+          className="col-span-12 lg:col-span-5 rounded-2xl p-8
+                     flex flex-col items-center justify-center text-center
+                     glass-card theme-transition"
         >
-          <h3 className="text-xl font-bold font-display text-[#0b1c30] mb-4">
+          <h3 className="text-xl font-bold font-display mb-4" style={{ color: 'var(--color-text)' }}>
             Objectif Hebdomadaire
           </h3>
 
@@ -238,18 +238,18 @@ export default function DashboardPage() {
               <svg className="w-full h-full -rotate-90" viewBox="0 0 128 128">
                 <circle
                   cx="64" cy="64" r="58"
-                  fill="transparent" stroke="#d3e4fe" strokeWidth="8"
+                  fill="transparent" stroke="var(--color-border)" strokeWidth="8"
                 />
                 <circle
                   cx="64" cy="64" r="58"
-                  fill="transparent" stroke="#8127cf" strokeWidth="8"
+                  fill="transparent" stroke="var(--color-primary)" strokeWidth="8"
                   strokeDasharray="364.4"
                   strokeDashoffset={364.4 - (364.4 * meta.activeModuleProgress) / 100}
                   className="transition-all duration-700"
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl font-bold text-[#8127cf]">
+                <span className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>
                   {meta.activeModuleProgress}%
                 </span>
               </div>
@@ -293,7 +293,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
         {/* Carte "Continuer la leçon" */}
-        <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-2xl overflow-hidden flex flex-col">
+        <div className="bg-white border border-[#8127cf]/10 shadow-sm rounded-2xl overflow-hidden flex flex-col">
           <div className="h-48 relative bg-gradient-to-br from-purple-400 to-cyan-400">
             <div className="absolute top-4 left-4 bg-[#8127cf] text-white text-[10px]
                             font-bold px-3 py-1 rounded-full uppercase tracking-wider">
@@ -350,7 +350,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Feuille de route */}
-        <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-2xl p-6">
+        <div className="bg-white border border-[#8127cf]/10 shadow-sm rounded-2xl p-6">
           <h3 className="text-xl font-bold font-display text-[#0b1c30] mb-6">
             Feuille de route
           </h3>
@@ -387,8 +387,8 @@ export default function DashboardPage() {
       <div className="grid grid-cols-12 gap-6 mb-6">
 
         {/* Badges */}
-        <div className="col-span-12 lg:col-span-4 bg-white border border-purple-100 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-xl font-bold font-display text-[#0b1c30] mb-6"> Mes badges</h3>
+        <div className="col-span-12 lg:col-span-4 bg-white border border-[#8127cf]/10 rounded-2xl p-6 shadow-sm">
+          <h3 className="text-xl font-bold font-display text-[#0b1c30] mb-6">🏆 Mes badges</h3>
           <div className="grid grid-cols-3 gap-4">
             {/* Badge "AI Explorer" débloqué si au moins 1 leçon complétée */}
             <div
@@ -424,7 +424,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Activité récente */}
-        <div className="col-span-12 lg:col-span-8 bg-white border border-purple-100 rounded-2xl p-6 shadow-sm">
+        <div className="col-span-12 lg:col-span-8 bg-white border border-[#8127cf]/10 rounded-2xl p-6 shadow-sm">
           <h3 className="text-xl font-bold font-display text-[#0b1c30] mb-4">📋 Activité récente</h3>
 
           {loading ? (
@@ -481,7 +481,7 @@ export default function DashboardPage() {
               ? Array.from({ length: 2 }).map((_, i) => (
                   <div
                     key={i}
-                    className="bg-white border border-purple-100 p-6 rounded-2xl flex items-center gap-6"
+                    className="bg-white border border-[#8127cf]/10 p-6 rounded-2xl flex items-center gap-6"
                   >
                     <Skeleton className="w-20 h-20 rounded-2xl flex-shrink-0" />
                     <div className="flex flex-col gap-3 flex-1">
@@ -494,7 +494,7 @@ export default function DashboardPage() {
               : recommendations.map((item, i) => (
                   <div
                     key={i}
-                    className="bg-white border border-purple-100 p-6 rounded-2xl
+                    className="bg-white border border-[#8127cf]/10 p-6 rounded-2xl
                                flex items-center gap-6 shadow-sm hover:shadow-md transition-all group"
                   >
                     <div

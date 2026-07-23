@@ -1,90 +1,92 @@
 // src/services/certificateService.js
 import { supabase } from './supabaseClient'
 
-// ─── Vérifier si l'utilisateur mérite un certificat ─────────────────────────
+// ─── Vérifier si l'utilisateur mérite le certificat (TOUT le parcours) ───────
+//
+// CORRECTION : cette fonction vérifiait auparavant un seul module (moduleId).
+// Il n'y a qu'un seul certificat pour l'ensemble du cursus, donc on vérifie
+// désormais que TOUS les modules publiés sont complétés (leçons + quiz).
 
-export async function checkCertificateEligibility(userId, moduleId) {
-  // 1. Toutes les leçons du module sont complétées ?
-  const { count: totalLessons } = await supabase
-    .from('lessons')
-    .select('*', { count: 'exact', head: true })
-    .eq('module_id', moduleId)
+export async function checkCertificateEligibility(userId) {
+  const { data: modules, error: modulesError } = await supabase
+    .from('modules')
+    .select('id')
+    .eq('is_published', true)
 
-  const { count: completedLessons } = await supabase
-    .from('user_progress')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('module_id', moduleId)
-    .eq('completed', true)
+  if (modulesError) throw modulesError
 
-  const allLessonsComplete = totalLessons > 0 && completedLessons === totalLessons
+  const moduleIds = (modules || []).map((m) => m.id)
 
-  // 2. Quiz réussi avec score >= 80 ?
-  const { data: attempt } = await supabase
-    .from('quiz_attempts')
-    .select('score, passed')
-    .eq('user_id', userId)
-    .eq('module_id', moduleId)
-    .eq('passed', true)
-    .order('score', { ascending: false })
-    .limit(1)
-    .single()
+  if (moduleIds.length === 0) {
+    return { eligible: false, completedModules: 0, totalModules: 0 }
+  }
+
+  let completedModules = 0
+
+  for (const moduleId of moduleIds) {
+    const { count: totalLessons } = await supabase
+      .from('lessons')
+      .select('*', { count: 'exact', head: true })
+      .eq('module_id', moduleId)
+
+    const { count: completedLessons } = await supabase
+      .from('user_progress')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('module_id', moduleId)
+      .eq('completed', true)
+
+    const { data: attempt } = await supabase
+      .from('quiz_attempts')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('module_id', moduleId)
+      .eq('passed', true)
+      .limit(1)
+      .maybeSingle()
+
+    const moduleComplete =
+      totalLessons > 0 && completedLessons === totalLessons && !!attempt
+
+    if (moduleComplete) completedModules += 1
+  }
 
   return {
-    eligible: allLessonsComplete && !!attempt,
-    allLessonsComplete,
-    quizPassed: !!attempt,
-    bestScore: attempt?.score || 0,
+    eligible: completedModules === moduleIds.length,
+    completedModules,
+    totalModules: moduleIds.length,
   }
 }
 
-// ─── Générer un certificat ───────────────────────────────────────────────────
+// ─── Générer le certificat (une seule fois par utilisateur) ─────────────────
+//
+// CORRECTION : plus de moduleId — la base vérifie elle-même l'éligibilité
+// sur l'ensemble du parcours et crée l'unique certificat de l'utilisateur.
 
-export async function generateCertificate(userId, moduleId) {
-  // Vérifier l'éligibilité
-  const eligibility = await checkCertificateEligibility(userId, moduleId)
-  if (!eligibility.eligible) {
-    throw new Error('Conditions non remplies pour obtenir le certificat')
-  }
-
-  // Vérifier si déjà généré
-  const existing = await getCertificate(userId, moduleId)
-  if (existing) return existing
-
-  // Générer un numéro unique
-  const certificateNumber = `IAAI-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`
-
-  const { data, error } = await supabase
-    .from('certificates')
-    .insert({
-      user_id: userId,
-      module_id: moduleId,
-      certificate_number: certificateNumber,
-      issued_at: new Date().toISOString(),
-      score: eligibility.bestScore,
-    })
-    .select('*, modules(title)')
-    .single()
+export async function generateCertificate(userId) {
+  const { error } = await supabase.rpc('issue_certificate').single()
 
   if (error) throw error
-  return data
+  return getCertificate(userId)
 }
 
-// ─── Récupérer un certificat ─────────────────────────────────────────────────
+// ─── Récupérer le certificat de l'utilisateur ────────────────────────────────
+//
+// CORRECTION : un seul certificat par utilisateur désormais, plus besoin de
+// moduleId pour le retrouver.
 
-export async function getCertificate(userId, moduleId) {
+export async function getCertificate(userId) {
   const { data, error } = await supabase
     .from('certificates')
     .select('*, modules(title)')
     .eq('user_id', userId)
-    .eq('module_id', moduleId)
     .single()
 
   if (error) return null
   return data
 }
 
-// ─── Tous les certificats d'un utilisateur ───────────────────────────────────
+// ─── Tous les certificats d'un utilisateur (liste, pour compatibilité UI) ────
 
 export async function getUserCertificates(userId) {
   const { data, error } = await supabase

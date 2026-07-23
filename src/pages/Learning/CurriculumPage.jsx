@@ -131,10 +131,11 @@ export default function CurriculumPage() {
         const prevModDone    = idx === 0 || (base[idx - 1]?.progress === 100)
         const moduleUnlocked = idx === 0 || (isPremium && prevModDone)
 
-        let status = 'locked'
-        if (!moduleUnlocked)              status = 'locked'
-        else if (mod.progress === 100)    status = 'done'
-        else                              status = 'active'
+        const status = !moduleUnlocked
+          ? 'locked'
+          : mod.progress === 100
+            ? 'done'
+            : 'active'
 
         return { ...mod, status }
       })
