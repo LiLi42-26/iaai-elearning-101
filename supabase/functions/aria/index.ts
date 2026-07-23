@@ -12,6 +12,19 @@ const SUPABASE_KEY   = Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "";
 const EMBED_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${GEMINI_API_KEY}`;
 const CHAT_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
+// Garde-fous anti-abus (coût API Gemini) et modèle freemium.
+const MAX_QUESTION_LEN = 2000;   // longueur max d'une question
+const MAX_MSG_LEN      = 4000;   // longueur max d'un message d'historique
+const MAX_HISTORY      = 6;      // messages d'historique conservés
+const FREE_DAILY_LIMIT = 20;     // messages ARIA / jour pour un compte gratuit
+
+function jsonResponse(body: unknown, status: number, corsHeaders: Record<string, string>) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = corsHeadersFor(req);
 
@@ -21,16 +34,61 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ── 0. Authentifier l'appelant (verify_jwt=true garantit un JWT valide,
+    //       on récupère l'utilisateur pour appliquer le quota freemium) ───────
+    const authHeader = req.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    if (!token) {
+      return jsonResponse({ error: "Non autorisé" }, 401, corsHeaders);
+    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return jsonResponse({ error: "Session invalide" }, 401, corsHeaders);
+    }
+
     const { question, lessonId, moduleId, history = [] } = await req.json();
 
     if (!question?.trim()) {
-      return new Response(JSON.stringify({ error: "Question vide" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Question vide" }, 400, corsHeaders);
+    }
+    if (typeof question !== "string" || question.length > MAX_QUESTION_LEN) {
+      return jsonResponse(
+        { error: `Question trop longue (max ${MAX_QUESTION_LEN} caractères)` },
+        400,
+        corsHeaders,
+      );
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    // ── 0b. Quota freemium : les comptes gratuits sont limités par jour ──────
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.plan !== "premium") {
+      const startOfDay = new Date();
+      startOfDay.setUTCHours(0, 0, 0, 0);
+
+      const { count } = await supabase
+        .from("chat_history")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", startOfDay.toISOString());
+
+      if ((count ?? 0) >= FREE_DAILY_LIMIT) {
+        return jsonResponse(
+          {
+            error: `Limite gratuite atteinte (${FREE_DAILY_LIMIT} questions/jour). Passez Premium pour un accès illimité à ARIA.`,
+            limitReached: true,
+          },
+          429,
+          corsHeaders,
+        );
+      }
+    }
 
     // ── 1. Embedder la question avec Gemini text-embedding-004 ────────────────
     const embedRes = await fetch(EMBED_URL, {
@@ -84,10 +142,12 @@ Réponds en français. Sois concis, clair et encourageant.`;
 
     // ── 4. Construire les messages pour Gemini ────────────────────────────────
     // Gemini utilise "user" / "model" (pas "assistant")
-    const recentHistory = (history as any[]).slice(-6).map((m: any) => ({
-      role:  m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    }));
+    const recentHistory = (Array.isArray(history) ? history : [])
+      .slice(-MAX_HISTORY)
+      .map((m: any) => ({
+        role:  m.role === "assistant" ? "model" : "user",
+        parts: [{ text: String(m.content ?? "").slice(0, MAX_MSG_LEN) }],
+      }));
 
     const contents = [
       ...recentHistory,
