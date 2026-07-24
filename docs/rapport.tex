@@ -33,6 +33,21 @@
 \pgfplotsset{compat=1.18}
 
 % ============================================================
+%  FALLBACK POUR IMAGES MANQUANTES (placeholder gris)
+%  -> Retirer ce bloc quand toutes les images seront presentes
+% ============================================================
+\usepackage{xparse}
+\let\OldIncludegraphics\includegraphics
+\RenewDocumentCommand{\includegraphics}{O{}m}{%
+  \IfFileExists{#2}{\OldIncludegraphics[#1]{#2}}{%
+    \IfFileExists{#2.png}{\OldIncludegraphics[#1]{#2.png}}{%
+      \fbox{\parbox[c][4cm][c]{0.7\textwidth}{\centering\ttfamily\small
+        [ image manquante : \detokenize{#2} ]}}%
+    }%
+  }%
+}
+
+% ============================================================
 %  MISE EN PAGE
 % ============================================================
 \geometry{
@@ -580,7 +595,7 @@ décomposant les phases principales et leurs dépendances.
 ]{1}{9}
 
 \gantttitle{Planification du projet IAAI eLearning 101}{9} \\
-\gantttitlelist{S1,S2,S3,S4,S5,S6,S7,S8,S9}{1} \\
+\gantttitle{S1}{1}\gantttitle{S2}{1}\gantttitle{S3}{1}\gantttitle{S4}{1}\gantttitle{S5}{1}\gantttitle{S6}{1}\gantttitle{S7}{1}\gantttitle{S8}{1}\gantttitle{S9}{1} \\
 
 % Analyse
 \ganttgroup{Analyse et conception}{1}{2} \\
