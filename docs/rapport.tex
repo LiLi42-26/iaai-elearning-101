@@ -1,0 +1,2381 @@
+\documentclass[12pt, a4paper]{report}
+
+% ============================================================
+%  PACKAGES
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{times}
+\usepackage{helvet}
+\usepackage{color}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{tocloft}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{ragged2e}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{pgfgantt}
+\usepackage{listings} % Pour les blocs de code
+\usepackage{tikz} % Pour les diagrammes
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning} % Pour tikz
+\usepackage{pgfplots} % Pour les graphiques si necessaire
+\pgfplotsset{compat=1.18}
+
+% ============================================================
+%  MISE EN PAGE
+% ============================================================
+\geometry{
+  top    = 2.5cm,
+  bottom = 2.5cm,
+  left   = 2.5cm,
+  right  = 2.5cm
+}
+
+% ============================================================
+%  COULEURS
+% ============================================================
+\definecolor{mundiablue}{RGB}{0, 83, 155}
+\definecolor{codegreen}{RGB}{0,128,0}
+\definecolor{codegray}{RGB}{128,128,128}
+\definecolor{codepurple}{RGB}{128,0,128}
+\definecolor{backcolour}{RGB}{245,245,245}
+
+% ============================================================
+%  POLICES
+% ============================================================
+\renewcommand{\familydefault}{\rmdefault}
+
+% ============================================================
+%  EN-TÊTE ET PIED DE PAGE
+% ============================================================
+% Dans le préambule
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Salma Isser}}
+\fancyhead[C]{\small\textit{Mémoire de projet fin d'études}}
+\fancyhead[R]{\small\textit{2025-2026}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Forcer le style sur TOUTES les pages
+\usepackage{etoolbox}
+\patchcmd{\chapter}{\thispagestyle{plain}}{\thispagestyle{fancy}}{}{}
+
+
+% ============================================================
+%  TITRES DE SECTIONS
+% ============================================================
+\titleformat{\chapter}[block]
+  {\sffamily\large\bfseries\color{black}}
+  {\Roman{chapter}.}{0.5em}{}
+  [\titlerule]
+
+\titleformat{\section}[block]
+  {\sffamily\normalsize\bfseries}
+  {\thesection}{0.5em}{}
+
+\titleformat{\subsection}[block]
+  {\sffamily\normalsize\bfseries}
+  {}{0em}{}
+
+\titlespacing*{\chapter}{0pt}{10pt}{10pt}
+\titlespacing*{\section}{0pt}{8pt}{4pt}
+\titlespacing*{\subsection}{0pt}{6pt}{2pt}
+
+% ============================================================
+%  HYPERLINKS
+% ============================================================
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = mundiablue,
+  urlcolor   = mundiablue,
+  citecolor  = mundiablue
+}
+
+% ============================================================
+%  CONFIGURATION DE LISTINGS POUR LE CODE
+% ============================================================
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+% ============================================================
+%  DÉBUT DU DOCUMENT
+% ============================================================
+\begin{document}
+
+% ----------------------------------------------------------
+%  PAGE DE GARDE
+% ----------------------------------------------------------
+\begin{titlepage}
+  \thispagestyle{empty}
+  \centering
+
+  \begin{minipage}[t]{0.45\textwidth}
+    \flushleft
+    \includegraphics[height=2cm]{images/logo_mundiapolis.png}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.45\textwidth}
+    \flushright
+    \includegraphics[height=3.5cm]{images/logo_entreprise.png}
+  \end{minipage}
+
+  \vspace{0.5cm}
+
+  {\sffamily\Large\bfseries École d'Ingénierie}
+
+  \vspace{1cm}
+
+  {\sffamily\Large\bfseries MEMOIRE DE FIN D'ETUDES}
+
+  \vspace{0.8cm}
+
+  {\normalsize Présenté par :}
+
+  \vspace{0.3cm}
+
+  {\large\bfseries Mlle Salma ISSER}
+
+  \vspace{0.8cm}
+
+  {\large\bfseries Pour l'obtention du diplôme de Licence}
+
+  \vspace{0.4cm}
+
+  {\large\bfseries Filière Informatique Appliquée}
+
+  \vspace{0.3cm}
+
+  {\large\bfseries\textcolor{mundiablue}{Option Développement logiciel}}
+
+  \vspace{0.8cm}
+
+  {\large\bfseries Sujet}
+
+  \vspace{0.2cm}
+  \noindent\rule{\textwidth}{0.6pt}
+
+  \vspace{0.3cm}
+
+  {\fontsize{16}{22}\selectfont\textcolor{mundiablue}{
+Étude, conception et développement d'une plateforme e-learning \\[0.2cm]
+pour l'apprentissage de l'Intelligence Artificielle~: IAAI e-learning 101}}
+
+  \vspace{0.1cm}
+  \noindent\rule{\textwidth}{0.6pt}
+
+  \vspace{0.3cm}
+
+  \begin{flushleft}
+    {\normalsize Sous la direction de :}
+
+    \vspace{0.2cm}
+
+    \begin{tabular}{ll}
+      \textbf{M. Ayman Naim {\hspace{4cm}}} & \textbf{: Encadrant Entreprise} \\[0.3cm]
+      \textbf{Mme Ichraq ESSADEQ\hspace{1cm}} & \textbf{: Encadrante Académique} \\
+    \end{tabular}
+
+    \vspace{0.8cm}
+
+    {\normalsize Projet de fin d'études soutenu le \textcolor{mundiablue}{09 Juillet} 2026,
+    devant le jury composé de :}
+
+    \vspace{0.4cm}
+
+    \begin{tabular}{ll}
+      Mme Ichraq ESSADEQ\hspace{1cm}  & : Encadrante Académique \\[0.1cm]
+      M. Hamza ER-RAHMOUNY\hspace{1cm} & : Rapporteur \\
+    \end{tabular}
+
+    \vspace{0.4cm}
+
+    {\normalsize Référence : 0X-37-LINFO-Dév-2025-2026}
+  \end{flushleft}
+
+  \vfill
+
+  {\large\bfseries\textcolor{mundiablue}{Année Universitaire : 2025-2026}}
+
+\end{titlepage}
+
+% ----------------------------------------------------------
+%  REMERCIEMENTS
+% ----------------------------------------------------------
+\clearpage
+\thispagestyle{empty}
+\setcounter{page}{2}
+
+\begin{center}
+  {\sffamily\large\bfseries Remerciements}
+\end{center}
+
+\vspace{1cm}
+
+\onehalfspacing
+{\fontfamily{ptm}\selectfont\fontsize{12}{18}\selectfont
+
+Au terme de ce travail, je tiens à exprimer ma profonde gratitude envers toutes
+les personnes qui ont contribué, de près ou de loin, à la réalisation de ce stage
+et à l'aboutissement de ce projet de fin d'études.
+
+Mes premiers remerciements s'adressent à \textbf{Mme Ichraq ESSADEQ}, mon
+encadrante académique, pour son suivi rigoureux, ses conseils avisés et sa
+disponibilité constante tout au long de ce projet. Son accompagnement bienveillant
+a été une source d'encouragement précieuse.
+
+Je tiens également à exprimer ma reconnaissance à l'ensemble de l'équipe de
+\textbf{l'IAAI Academy} pour son accueil chaleureux, son professionnalisme exemplaire
+et les excellentes conditions de travail offertes durant cette période de stage.
+Leurs orientations et leur soutien continu ont été déterminants dans la réussite
+de cette expérience professionnelle.
+
+J'adresse mes sincères remerciements à \textbf{M. Hamza ER-RAHMOUNY} pour avoir
+accepté d'évaluer ce travail en qualité de rapporteur, et pour l'intérêt qu'il a
+bien voulu porter à ce projet.
+
+Ma gratitude s'étend également à l'ensemble du corps enseignant de
+\textbf{l'Université Mundiapolis}, dont l'enseignement de qualité m'a permis
+d'acquérir les connaissances et les compétences nécessaires à la conduite de ce projet.
+
+Enfin, je souhaite exprimer toute ma reconnaissance à ma famille et à mes proches,
+dont le soutien indéfectible et les encouragements constants ont été, tout au long
+de mon parcours académique, une source de motivation inestimable.
+
+}
+
+% ----------------------------------------------------------
+%  RÉSUMÉ
+% ----------------------------------------------------------
+\clearpage
+
+\begin{center}
+  {\sffamily\large\bfseries Résumé}
+\end{center}
+
+\vspace{0.5cm}
+
+\onehalfspacing
+{\fontfamily{ptm}\selectfont\fontsize{12}{18}\selectfont
+
+Ce rapport présente le travail réalisé dans le cadre du projet de fin d'études
+effectué au sein de l'International Academy of Artificial Intelligence (IAAI~Academy).
+Le projet porte sur la conception et le développement d'une plateforme e-learning
+interactive dédiée à l'apprentissage de l'Intelligence Artificielle, intitulée
+\textit{IAAI eLearning~101}. L'objectif principal est de démocratiser l'accès aux
+connaissances fondamentales en Intelligence Artificielle à travers une solution
+pédagogique moderne, accessible aussi bien sur le web que sur les appareils mobiles.
+
+La plateforme s'adresse aux étudiants, aux professionnels en reconversion ainsi
+qu'à toute personne souhaitant découvrir les concepts de l'Intelligence Artificielle
+de manière progressive et structurée. Afin de faciliter la compréhension de notions
+souvent abstraites, le projet s'appuie sur une approche pédagogique immersive
+intégrant des animations interactives inspirées de références internationales telles
+que 3Blue1Brown et Brilliant, et produites à l'aide de la bibliothèque Manim.
+Les contenus sont proposés en français et en arabe afin de répondre aux besoins
+du public marocain et africain francophone.
+
+La réalisation du projet a suivi une démarche structurée comprenant l'analyse des
+besoins, la modélisation de l'architecture fonctionnelle et de la base de données,
+la conception de l'interface utilisateur, ainsi que le développement de la solution
+à l'aide de technologies modernes telles que React, Vite, Tailwind~CSS et Supabase.
+Le résultat obtenu est une plateforme interactive offrant une expérience d'apprentissage
+fluide, intuitive et adaptée aux exigences actuelles de la formation numérique.
+
+}
+
+\vspace{0.5cm}
+
+\noindent{\sffamily\normalsize\bfseries Mots-clés~:}\\[0.2cm]
+{\fontfamily{ptm}\selectfont\fontsize{12}{16}\selectfont
+E-learning, Intelligence Artificielle, Plateforme Interactive, React, Supabase,
+Apprentissage Numérique, Animations Pédagogiques.
+}
+
+% ----------------------------------------------------------
+%  ABSTRACT
+% ----------------------------------------------------------
+\clearpage
+
+\begin{center}
+  {\sffamily\large\bfseries Abstract}
+\end{center}
+
+\vspace{0.5cm}
+
+\onehalfspacing
+{\fontfamily{ptm}\selectfont\fontsize{12}{18}\selectfont
+
+This report presents the work carried out as part of an end-of-studies internship
+at the International Academy of Artificial Intelligence (IAAI~Academy). The project
+focuses on the design and development of an interactive e-learning platform dedicated
+to the introduction and learning of Artificial Intelligence concepts, entitled
+\textit{IAAI eLearning~101}. The primary objective was to provide learners with a
+structured, accessible, and engaging educational environment, enabling them to follow
+organized courses, complete assessments, monitor their learning progress, and obtain
+certificates upon successful completion of training modules.
+
+To achieve these objectives, a thorough analysis of user requirements was conducted,
+followed by the design of the system architecture and database schema. The platform
+was subsequently developed using a modern technology stack, including React, Vite,
+Tailwind~CSS, Supabase, and PostgreSQL, ensuring performance, scalability, and
+security. The solution incorporates several key functionalities, namely user
+authentication, course and lesson management, quiz evaluation with automated scoring,
+progress tracking, certificate generation, and an administrative dashboard for
+content management.
+
+This report describes the different phases of the project, from requirement analysis
+and system design through to implementation and functional testing. It also discusses
+the technical choices made throughout the development process and outlines
+perspectives for future improvement, in particular the integration of an intelligent
+pedagogical assistant based on Retrieval-Augmented Generation (RAG) and Large
+Language Models (LLMs).
+
+}
+
+\vspace{0.5cm}
+
+\noindent{\sffamily\normalsize\bfseries Keywords:}\\[0.2cm]
+{\fontfamily{ptm}\selectfont\fontsize{12}{16}\selectfont
+E-learning, Artificial Intelligence, Web Development, React, Supabase, PostgreSQL,
+Educational Platform, RAG, Large Language Models.
+}
+
+% ----------------------------------------------------------
+%  LISTE DES FIGURES
+% ----------------------------------------------------------
+\clearpage
+\addcontentsline{toc}{chapter}{Liste des figures}
+\listoffigures
+
+% ----------------------------------------------------------
+%  LISTE DES TABLEAUX
+% ----------------------------------------------------------
+\clearpage
+\addcontentsline{toc}{chapter}{Liste des tableaux}
+\listoftables
+
+% ----------------------------------------------------------
+%  TABLE DES MATIÈRES
+% ----------------------------------------------------------
+\clearpage
+\tableofcontents
+
+% ----------------------------------------------------------
+%  CHAPITRES
+% ----------------------------------------------------------
+\clearpage
+
+\renewcommand{\chaptername}{}
+\renewcommand{\thechapter}{\Roman{chapter}}
+
+% ============================================================
+%  CHAPITRE I : INTRODUCTION
+% ============================================================
+\chapter{Introduction}
+
+\onehalfspacing
+
+\section{Contexte général}
+L'évolution rapide des technologies numériques a profondément transformé les
+pratiques d'apprentissage et les modes d'accès au savoir. Parmi ces transformations,
+les plateformes d'enseignement en ligne occupent désormais une place centrale dans
+les domaines de l'éducation formelle et de la formation professionnelle continue.
+Elles offrent aux apprenants la possibilité d'accéder à des contenus pédagogiques
+variés, de progresser à leur propre rythme et d'acquérir de nouvelles compétences
+de manière flexible et interactive, indépendamment de toute contrainte géographique
+ou temporelle.
+
+Parallèlement à cette révolution pédagogique, l'Intelligence Artificielle connaît
+un développement exponentiel et s'impose comme l'un des domaines les plus stratégiques
+de l'informatique contemporaine. Malgré l'engouement croissant pour cette discipline,
+l'accès à des ressources pédagogiques structurées, rigoureuses et adaptées aux
+débutants demeure un obstacle pour de nombreux apprenants, en particulier dans les
+pays francophones d'Afrique et du Moyen-Orient.
+
+C'est dans ce contexte que s'inscrit le projet \textit{IAAI eLearning 101}, une
+plateforme e-learning dédiée à l'apprentissage des fondamentaux de l'Intelligence
+Artificielle.
+
+\section{Problématique}
+La démocratisation de l'Intelligence Artificielle se heurte à plusieurs verrous
+pédagogiques et techniques. D'une part, les concepts fondamentaux de l'IA sont
+souvent perçus comme abstraits et difficiles d'accès pour les débutants. D'autre
+part, les plateformes e-learning existantes présentent des lacunes en termes
+d'interactivité, de personnalisation et d'accompagnement intelligent des apprenants.
+La question centrale de ce projet est donc la suivante : comment concevoir et
+développer une plateforme e-learning qui rende l'apprentissage de l'IA accessible,
+engageant et efficace tout en intégrant des technologies modernes d'assistance
+pédagogique ?
+
+\section{Objectifs du projet}
+L'objectif principal du projet est de concevoir, développer et déployer une
+plateforme e-learning nommée \textit{IAAI eLearning 101}. Les objectifs spécifiques
+sont :
+\begin{itemize}
+    \item Offrir un parcours pédagogique structuré et progressif pour les débutants
+    en Intelligence Artificielle.
+    \item Proposer une expérience utilisateur moderne, intuitive et responsive.
+    \item Intégrer des fonctionnalités de suivi de progression et d'évaluation
+    (quiz, certification).
+    \item Fournir un assistant pédagogique intelligent (ARIA) basé sur une
+    architecture RAG pour un accompagnement personnalisé.
+    \item Assurer la sécurité, la performance et l'évolutivité de la plateforme
+    grâce à une architecture cloud moderne.
+\end{itemize}
+
+\section{Méthodologie adoptée}
+
+La réalisation de ce projet a suivi une approche itérative et incrémentale, adaptée aux besoins évolutifs de la plateforme et aux contraintes du développement web moderne. Cette méthodologie a permis de développer progressivement les différentes fonctionnalités tout en effectuant des phases régulières de tests et de validation.
+
+Le projet a été mené selon plusieurs étapes successives :
+
+\begin{itemize}
+    \item \textbf{Analyse des besoins :} Identification des acteurs du système, recueil des besoins fonctionnels et non fonctionnels, et définition des objectifs de la plateforme.
+
+    \item \textbf{Conception :} Élaboration des diagrammes UML, conception de la base de données relationnelle sous PostgreSQL.
+
+    \item \textbf{Développement :} Implémentation progressive des fonctionnalités de la plateforme à l'aide des technologies retenues, notamment React pour l'interface utilisateur, Supabase pour les services backend, PostgreSQL pour la gestion des données, Stripe pour les paiements et Gemini pour les fonctionnalités d'intelligence artificielle.
+
+    \item \textbf{Tests et validation :} Vérification continue des fonctionnalités développées à travers des tests fonctionnels, des tests de sécurité, des tests de performance et des tests de compatibilité afin d'assurer la qualité et la fiabilité de la solution.
+
+    \item \textbf{Déploiement :} Mise en production de l'application sur les infrastructures cloud en utilisant Vercel pour le frontend et Supabase pour les services backend et la base de données.
+\end{itemize}
+
+Cette approche a permis d'obtenir une plateforme fonctionnelle et évolutive tout en facilitant l'intégration progressive des différentes composantes du projet.
+
+\section{Organisation du rapport}
+Le présent rapport est structuré en cinq chapitres.
+\begin{itemize}
+    \item Le \textbf{Chapitre II} présente l'organisme d'accueil, l'IAAI Academy,
+    ainsi que le contexte et la planification du stage.
+    \item Le \textbf{Chapitre III} est consacré à l'analyse des besoins et à la
+    conception détaillée de la solution, incluant les diagrammes UML et le modèle
+    de données.
+    \item Le \textbf{Chapitre IV} détaille la phase de réalisation, les choix
+    technologiques et l'implémentation des principales fonctionnalités.
+    \item Le \textbf{Chapitre V} présente les résultats des tests et la validation
+    de la plateforme.
+    \item La \textbf{Conclusion générale} dresse le bilan du projet et propose des
+    perspectives d'évolution.
+\end{itemize}
+
+% ============================================================
+%  CHAPITRE II : ENVIRONNEMENT DE STAGE
+% ============================================================
+\chapter{Environnement de stage}
+
+\section{Introduction}
+Ce deuxième chapitre présente le cadre dans lequel s'est déroulé le stage de fin
+d'études. Il décrit l'organisme d'accueil, l'IAAI Academy, ainsi que le contexte,
+le cahier des charges et la planification du projet \textit{IAAI eLearning 101}.
+Il expose également les grandes lignes de la réalisation avant que celle-ci ne
+soit détaillée dans les chapitres suivants.
+
+\section{Présentation de l'entreprise et du stage}
+
+\subsection{La présentation de l'entreprise}
+L'International Academy of Artificial Intelligence (IAAI Academy) est une
+organisation spécialisée dans la formation, le conseil et l'accompagnement
+académique dans les domaines de l'Intelligence Artificielle, de la Data Science
+et des technologies numériques avancées. Fondée à Casablanca, elle s'inscrit dans
+une dynamique de développement des compétences numériques au Maroc.
+
+
+Les activités de l'IAAI Academy sont organisées autour de trois pôles principaux :
+\begin{itemize}
+    \item \textbf{Pôle Formations :} Propose des programmes en Intelligence
+    Artificielle générative, Data Science, Machine Learning, Cloud Computing et
+    MLOps.
+    \item \textbf{Pôle Services :} Accompagne les entreprises dans leur
+    transformation numérique et le développement de solutions IA sur mesure.
+    \item \textbf{Pôle Académique :} Encadre les étudiants, ingénieurs et
+    chercheurs à travers des activités de mentorat et de suivi de projets.
+\end{itemize}
+
+\subsection{La présentation du stage}
+Le stage s'est déroulé dans le cadre du projet \textit{IAAI eLearning 101},
+initié pour répondre à un besoin spécifique : offrir une formation d'introduction
+à l'Intelligence Artificielle, accessible en ligne, en français et en arabe, pour
+un public large. Le contexte est celui d'une demande croissante pour les
+compétences en IA, couplée à une pénurie de ressources pédagogiques adaptées au
+contexte local.
+
+Sur le plan pédagogique et économique, le parcours est structuré en
+\textbf{huit modules} progressifs. Le \textbf{premier module est gratuit} afin
+de permettre à tout visiteur de découvrir la plateforme, tandis que l'accès aux
+\textbf{modules 2 à 8} est débloqué après un \textbf{paiement unique de 299~DH}.
+Chaque module se conclut par un quiz de validation, et un \textbf{certificat}
+est délivré à l'apprenant après la réussite de l'ensemble du parcours. Le
+contenu privilégie l'apprentissage par la visualisation, à travers des
+animations pédagogiques inspirées de la chaîne \textit{3Blue1Brown}.
+
+Le cahier des charges du projet définissait les spécifications suivantes :
+\begin{itemize}
+    \item Développer une plateforme e-learning web moderne et responsive.
+    \item Mettre en place un système d'authentification et de gestion de profils.
+    \item Créer un catalogue de formations structuré en modules et leçons.
+    \item Intégrer un système de quiz à correction automatique.
+    \item Développer un tableau de bord de suivi de progression.
+    \item Générer des certificats de réussite.
+    \item Intégrer un assistant pédagogique intelligent (ARIA) basé sur un LLM.
+    \item Mettre en place un système de paiement pour des formations premium.
+    \item Assurer l'internationalisation (Français/Arabe).
+    \item Fournir une interface d'administration pour la gestion des contenus.
+\end{itemize}
+
+Les objectifs du stage, tels que définis dans le cahier des charges, étaient :
+\begin{enumerate}
+    \item Conception et développement d'une plateforme e-learning fonctionnelle.
+    \item Intégration de fonctionnalités pédagogiques innovantes (ARIA).
+    \item Mise en place d'une infrastructure technique robuste et sécurisée.
+    \item Respect des délais et de la qualité définis dans la planification.
+\end{enumerate}
+
+La planification du stage a été réalisée à l'aide d'un diagramme de Gantt,
+décomposant les phases principales et leurs dépendances.
+\newpage
+\begin{figure}[H]
+\centering
+
+\begin{ganttchart}[
+    hgrid,
+    vgrid,
+    x unit=0.75cm,
+    y unit chart=0.7cm,
+    title height=1,
+    bar height=0.6,
+    group height=0.7,
+    progress label text={},
+    bar/.append style={fill=blue!40},
+    group/.append style={fill=gray!40}
+]{1}{9}
+
+\gantttitle{Planification du projet IAAI eLearning 101}{9} \\
+\gantttitlelist{S1,S2,S3,S4,S5,S6,S7,S8,S9}{1} \\
+
+% Analyse
+\ganttgroup{Analyse et conception}{1}{2} \\
+\ganttbar{Analyse des besoins}{1}{1} \\
+\ganttbar{Etude de l'existant}{1}{1} \\
+\ganttbar{Diagrammes UML}{2}{2} \\
+\ganttbar{Conception BDD (MCD/MLD)}{2}{2} \\
+
+% Développement principal
+\ganttgroup{Developpement de la plateforme}{3}{7} \\
+\ganttbar{Configuration du projet}{3}{3} \\
+\ganttbar{Authentification}{3}{4} \\
+\ganttbar{Gestion des formations}{4}{5} \\
+\ganttbar{Modules et lecons}{4}{5} \\
+\ganttbar{Quiz et evaluations}{5}{6} \\
+\ganttbar{Suivi de progression}{5}{6} \\
+\ganttbar{Generation des certificats}{6}{6} \\
+\ganttbar{Paiement Stripe}{6}{7} \\
+\ganttbar{Interface administration}{6}{7} \\
+
+% IA
+\ganttgroup{Assistant intelligent ARIA}{6}{8} \\
+\ganttbar{Architecture RAG}{6}{6} \\
+\ganttbar{Base vectorielle pgvector}{6}{7} \\
+\ganttbar{Integration Gemini}{7}{7} \\
+\ganttbar{Developpement ARIA}{7}{8} \\
+
+% Manim
+\ganttgroup{Contenu pedagogique}{6}{7} \\
+\ganttbar{Creation video Manim}{6}{7} \\
+
+% Validation
+\ganttgroup{Tests et deploiement}{8}{9} \\
+\ganttbar{Tests fonctionnels}{8}{8} \\
+\ganttbar{Tests de securite}{8}{8} \\
+\ganttbar{Corrections et optimisation}{8}{9} \\
+\ganttbar{Deploiement final}{9}{9} \\
+
+% Rapport
+\ganttgroup{Documentation}{7}{9} \\
+\ganttbar{Redaction du rapport}{7}{9} \\
+
+\ganttmilestone{Fin du projet}{9}
+
+\end{ganttchart}
+
+\caption{Diagramme de Gantt du projet IAAI eLearning 101}
+\label{fig:gantt}
+
+\end{figure}
+Le projet a été réalisé sur une période de deux mois, du 08 mai 2026 au
+08 juillet 2026. La planification a été organisée en quatre phases
+principales : l'analyse et la conception, le développement de la
+plateforme, la création
+de contenu pédagogique avec Manim, puis les phases de tests,
+déploiement et rédaction du rapport final.
+
+\section{Présentation de la réalisation}
+Cette section propose un aperçu synthétique du travail réalisé durant le stage,
+avant que les chapitres suivants n'en détaillent la conception et l'implémentation.
+
+\subsection{Choix techniques}
+La réalisation de la plateforme \textit{IAAI eLearning 101} s'appuie sur une
+architecture moderne combinant React, Vite et Tailwind~CSS pour le frontend, et
+Supabase (PostgreSQL, Auth, Edge Functions) pour le backend. L'assistant
+pédagogique ARIA repose quant à lui sur une architecture RAG associant
+pgvector et le modèle Gemini~2.5~Flash. Ces choix techniques, motivés par des
+critères de performance, de sécurité et d'évolutivité, sont détaillés et
+justifiés au Chapitre~IV.
+
+\subsection{Détail des tâches}
+Le travail effectué durant le stage a couvert l'ensemble du cycle de
+développement du projet : l'analyse des besoins et la modélisation UML/Merise,
+la conception de l'interface utilisateur, le développement des fonctionnalités
+principales de la plateforme (authentification, gestion des formations, quiz,
+certificats, paiement), l'intégration de l'assistant intelligent ARIA, la
+production de contenus pédagogiques animés avec Manim, ainsi que les tests et
+le déploiement de la solution.
+
+\subsection{Description et explications du travail réalisé}
+Le résultat de ce travail est une plateforme e-learning complète et fonctionnelle,
+offrant un parcours pédagogique structuré, un système d'évaluation automatisé,
+un suivi de progression, un assistant conversationnel intelligent et une
+interface d'administration. L'ensemble de ces éléments est présenté en détail
+dans les chapitres suivants, consacrés respectivement à la conception, à la
+réalisation et aux tests de la plateforme.
+
+\section{Conclusion}
+Ce chapitre a permis de situer le cadre du stage en présentant l'organisme
+d'accueil, le cahier des charges et la planification retenue, ainsi qu'un
+aperçu général du travail accompli. Les chapitres suivants approfondissent
+successivement la conception, la réalisation et la validation de la
+plateforme \textit{IAAI eLearning 101}.
+
+\section{Remarques générales}
+Le déroulement du stage au sein de l'IAAI Academy s'est inscrit dans de bonnes
+conditions de travail, marquées par un encadrement disponible et un accès aux
+outils nécessaires à la conduite du projet. Le respect de la planification
+initiale a permis de couvrir l'ensemble des phases prévues, de l'analyse des
+besoins jusqu'au déploiement final de la plateforme.
+
+% ============================================================
+%  CHAPITRE III : ANALYSE ET CONCEPTION
+% ============================================================
+\newpage
+\chapter{Analyse et conception}
+
+\section{Analyse des besoins}
+
+\subsection{Identification des acteurs}
+
+L'analyse fonctionnelle du système a permis d'identifier les différents acteurs
+interagissant avec la plateforme \textit{IAAI eLearning 101}.
+
+\begin{itemize}
+    \item \textbf{Apprenant :} utilisateur principal de la plateforme. Il peut
+    consulter le catalogue des formations, s'inscrire à des cours, suivre les
+    leçons, passer des quiz, obtenir des certificats et interagir avec
+    l'assistant intelligent ARIA.
+
+    \item \textbf{Administrateur :} responsable de la gestion globale de la
+    plateforme. Il administre les utilisateurs, les formations, les modules,
+    les leçons, les quiz et supervise l'activité générale du système.
+
+    \item \textbf{Assistant ARIA :} assistant pédagogique intelligent intégré à
+    la plateforme. Il accompagne les apprenants en répondant à leurs questions
+    et en leur fournissant une aide contextualisée basée sur les contenus
+    pédagogiques disponibles.
+\end{itemize}
+
+\subsection{Besoins fonctionnels}
+
+Les besoins fonctionnels représentent les services que doit fournir la
+plateforme afin de répondre aux attentes des utilisateurs.
+
+\begin{itemize}
+    \item \textbf{BF1 : Authentification des utilisateurs}
+    \begin{itemize}
+        \item Inscription et connexion.
+        \item Réinitialisation du mot de passe.
+        \item Gestion des sessions utilisateur.
+    \end{itemize}
+
+    \item \textbf{BF2 : Gestion des formations}
+    \begin{itemize}
+        \item Consultation du catalogue des formations.
+        \item Recherche et filtrage des cours.
+        \item Consultation des détails d'une formation.
+    \end{itemize}
+
+    \item \textbf{BF3 : Gestion des modules et des leçons}
+    \begin{itemize}
+        \item Organisation des formations en modules.
+        \item Consultation des leçons et ressources pédagogiques.
+        \item Intégration de vidéos et contenus interactifs.
+    \end{itemize}
+
+    \item \textbf{BF4 : Gestion des évaluations}
+    \begin{itemize}
+        \item Passage des quiz.
+        \item Correction automatique.
+        \item Affichage des résultats et statistiques.
+    \end{itemize}
+
+    \item \textbf{BF5 : Suivi de progression}
+    \begin{itemize}
+        \item Enregistrement de l'avancement des apprenants.
+        \item Visualisation des statistiques d'apprentissage.
+        \item Historique des activités réalisées.
+    \end{itemize}
+
+    \item \textbf{BF6 : Gestion des certificats}
+    \begin{itemize}
+        \item Génération automatique des certificats.
+        \item Téléchargement au format PDF.
+        \item Vérification de l'authenticité des certificats.
+    \end{itemize}
+
+    \item \textbf{BF7 : Paiement en ligne}
+    \begin{itemize}
+        \item Achat des formations premium.
+        \item Intégration sécurisée de Stripe.
+        \item Gestion des abonnements et transactions.
+    \end{itemize}
+
+    \item \textbf{BF8 : Assistant pédagogique ARIA}
+    \begin{itemize}
+        \item Réponse aux questions des apprenants.
+        \item Assistance personnalisée.
+        \item Recherche contextuelle basée sur le système RAG.
+    \end{itemize}
+
+    \item \textbf{BF9 : Gestion de la communauté}
+    \begin{itemize}
+        \item Publication de commentaires.
+        \item Interaction entre les apprenants.
+        \item Partage d'expériences et d'informations.
+    \end{itemize}
+
+    \item \textbf{BF10 : Notifications}
+    \begin{itemize}
+        \item Alertes relatives aux formations.
+        \item Notifications de réussite et de progression.
+        \item Notifications liées aux paiements.
+    \end{itemize}
+
+    \item \textbf{BF11 : Recommandations pédagogiques}
+    \begin{itemize}
+        \item Suggestion de formations adaptées.
+        \item Recommandation basée sur la progression et les intérêts
+        de l'apprenant.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Résumé des besoins fonctionnels}
+
+\begin{table}[H]
+\centering
+\caption{Résumé des besoins fonctionnels}
+\label{tab:besoins_fonctionnels}
+\begin{tabularx}{\textwidth}{|c|X|}
+\hline
+\textbf{Code} & \textbf{Description} \\
+\hline
+BF1 & Authentification et gestion des utilisateurs \\
+\hline
+BF2 & Gestion de formation \\
+\hline
+BF3 & Gestion des modules et des leçons \\
+\hline
+BF4 & Gestion des quiz et évaluations \\
+\hline
+BF5 & Suivi de progression \\
+\hline
+BF6 & Génération des certificats \\
+\hline
+BF7 & Paiement sécurisé via Stripe \\
+\hline
+BF8 & Assistant pédagogique intelligent ARIA \\
+\hline
+BF9 & Gestion de la communauté \\
+\hline
+BF10 & Notifications système \\
+\hline
+BF11 & Recommandations pédagogiques \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Besoins non fonctionnels}
+
+Outre les fonctionnalités attendues, la plateforme doit respecter plusieurs
+contraintes de qualité garantissant son bon fonctionnement.
+
+\begin{itemize}
+    \item \textbf{BNF1 -- Sécurité :}
+    protection des données personnelles, authentification sécurisée,
+    contrôle des accès et chiffrement des communications.
+
+    \item \textbf{BNF2 -- Performance :}
+    temps de réponse rapide pour les opérations courantes et faible
+    latence pour l'assistant ARIA.
+
+    \item \textbf{BNF3 -- Disponibilité :}
+    accès permanent aux services de la plateforme avec un taux élevé
+    de disponibilité.
+
+    \item \textbf{BNF4 -- Compatibilité :}
+    fonctionnement sur les principaux navigateurs web modernes
+    (Chrome, Firefox et Edge ).
+
+    \item \textbf{BNF5 -- Responsive Design :}
+    adaptation automatique aux ordinateurs, tablettes et smartphones.
+
+    \item \textbf{BNF6 -- Maintenabilité :}
+    architecture modulaire facilitant les évolutions et la maintenance.
+
+    \item \textbf{BNF7 -- Évolutivité :}
+    possibilité d'ajouter de nouvelles fonctionnalités sans modifier
+    l'architecture globale.
+
+    \item \textbf{BNF8 -- Internationalisation :}
+    prise en charge du français et de l'arabe avec support du mode RTL.
+
+    \item \textbf{BNF9 -- Fiabilité :}
+    intégrité et cohérence des données stockées dans la base PostgreSQL.
+\end{itemize}
+\section{Modélisation UML}
+\subsection{Diagramme de cas d'utilisation}
+
+Le diagramme de cas d'utilisation présenté à la figure \ref{fig:usecase}
+illustre les différentes interactions entre les acteurs du système et la
+plateforme \textit{IAAI eLearning 101}. Il permet de définir le périmètre
+fonctionnel de l'application ainsi que les services proposés aux différents
+types d'utilisateurs.
+
+Trois acteurs principaux ont été identifiés : le visiteur, l'apprenant et
+l'administrateur. Deux acteurs externes interviennent également dans certaines
+fonctionnalités spécifiques : le fournisseur d'authentification OAuth pour la
+connexion via des services tiers et la plateforme Stripe pour le traitement
+sécurisé des paiements en ligne. Le réseau social LinkedIn intervient quant à
+lui dans le partage des certificats obtenus par les apprenants.
+
+Le visiteur peut accéder aux fonctionnalités de découverte de la plateforme,
+notamment la consultation de la page d'accueil, la recherche de formations,
+l'accès aux modules gratuits ainsi que le passage d'un test de niveau. Il peut
+également créer un compte ou se connecter à l'application.
+
+L'apprenant constitue l'acteur principal du système. Après authentification,
+il peut consulter le catalogue des formations, suivre les leçons, réaliser des
+exercices interactifs, passer des quiz, sauvegarder ses favoris et suivre sa
+progression. Il bénéficie également des fonctionnalités avancées offertes par
+l'assistant pédagogique intelligent ARIA, notamment l'assistance
+conversationnelle, les recommandations personnalisées et l'analyse de ses
+performances.
+
+La plateforme intègre également des fonctionnalités de gamification permettant
+de suivre la progression de l'apprenant, de débloquer des badges et d'obtenir
+des certificats de réussite. Ces certificats peuvent être téléchargés au format
+PDF puis partagés directement sur le réseau professionnel LinkedIn.
+
+Les formations premium sont accessibles via un système d'abonnement sécurisé.
+L'apprenant peut souscrire un abonnement, effectuer un paiement via Stripe,
+consulter son historique de transactions et gérer son abonnement depuis son
+espace personnel.
+
+L'administrateur dispose quant à lui d'un ensemble de fonctionnalités de
+gestion lui permettant d'administrer les utilisateurs, les contenus
+pédagogiques, les évaluations et les paramètres de sécurité de la plateforme.
+Il peut également consulter les indicateurs de performance et analyser le
+comportement des utilisateurs afin d'améliorer continuellement l'expérience
+d'apprentissage.
+
+Ce diagramme met ainsi en évidence la richesse fonctionnelle de la plateforme
+IAAI eLearning 101 ainsi que l'intégration de services modernes tels que
+l'intelligence artificielle, les paiements en ligne et les mécanismes de
+gamification.
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.8\textheight]{images/cas-use.png}
+    \caption{Diagramme de cas d'utilisation de la plateforme IAAI eLearning 101}
+    \label{fig:usecase}
+\end{figure}
+
+\subsection{Diagramme de classes}
+Le diagramme de classes présenté à la figure \ref{fig:class}
+décrit la structure statique du système IAAI eLearning 101.
+Il met en évidence les principales entités métier ainsi que les
+relations qui les unissent.
+
+La classe \textit{User} représente les utilisateurs de la plateforme,
+qu'ils soient apprenants ou administrateurs. Les formations sont
+modélisées par la classe \textit{Course}, composée de plusieurs
+modules, eux-mêmes constitués de leçons pédagogiques.
+
+Les évaluations sont représentées par les classes \textit{Quiz},
+\textit{Question} et \textit{QuizAttempt}, permettant de gérer les
+questions ainsi que les tentatives effectuées par les apprenants.
+
+La progression des apprenants est assurée par la classe
+\textit{Progress}, tandis que les certificats obtenus sont stockés
+dans la classe \textit{Certificate}. Les transactions financières
+sont enregistrées dans la classe \textit{Payment}.
+
+Enfin, l'assistant pédagogique intelligent ARIA repose sur les
+classes \textit{Conversation} et \textit{DocumentVector}, qui
+permettent respectivement de conserver l'historique des échanges
+et de réaliser la recherche sémantique nécessaire au
+fonctionnement du système RAG.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/classe.png}
+    \caption{Diagramme de classe de la plateforme IAAI eLearning 101}
+    \label{fig:class}
+\end{figure}
+\newpage
+\section{Diagrammes de séquence}
+
+Les diagrammes de séquence permettent de représenter les interactions
+entre les différents composants du système au cours de l'exécution
+d'un scénario précis. Afin d'améliorer la lisibilité et de faciliter
+l'analyse, plusieurs diagrammes ont été réalisés pour les principaux
+cas d'utilisation de la plateforme IAAI eLearning 101.
+
+\subsection{Authentification de l'apprenant}
+
+Ce diagramme décrit le processus d'authentification d'un utilisateur.
+L'apprenant saisit ses identifiants via l'interface web. Le système
+d'authentification vérifie les informations dans la base de données
+puis autorise ou refuse l'accès à la plateforme.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/séquence1.png}
+    \caption{Diagramme de séquence d'authentification}
+    \label{fig:seq_auth}
+\end{figure}
+\newpage
+\subsection{Inscription à une formation premium}
+
+Ce diagramme illustre le processus d'inscription à une formation
+premium. Lorsque l'apprenant sélectionne une formation payante,
+la plateforme communique avec le service de paiement Stripe afin
+de traiter la transaction. Après validation du paiement,
+l'accès à la formation est automatiquement accordé.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/séquence2.png}
+    \caption{Diagramme de séquence d'inscription et de paiement}
+    \label{fig:seq_payment}
+\end{figure}
+\newpage
+\subsection{Suivi de l'apprentissage et progression}
+
+Ce diagramme présente les interactions intervenant lors de la
+consultation d'un cours, de la réalisation d'un quiz et de la
+mise à jour de la progression de l'apprenant. Les informations
+sont enregistrées dans la base de données afin d'assurer un suivi
+continu du parcours de formation.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/séquence3.png}
+    \caption{Diagramme de séquence du suivi de progression}
+    \label{fig:seq_progress}
+\end{figure}
+\newpage
+\subsection{Interaction avec l'assistant ARIA et génération du certificat}
+
+Ce diagramme représente le fonctionnement de l'assistant pédagogique
+intelligent ARIA. L'apprenant soumet une question, qui est analysée
+par le module d'intelligence artificielle afin de produire une réponse
+personnalisée. Une fois les modules validés, le système génère
+automatiquement un certificat pouvant être partagé sur LinkedIn.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/séquence4.png}
+    \caption{Diagramme de séquence de l'assistant ARIA et du certificat}
+    \label{fig:seq_aria}
+\end{figure}
+\newpage
+\subsection{Diagramme de déploiement}
+Le diagramme de déploiement présente l’architecture physique de la plateforme
+IAAI eLearning 101. L’application frontend, développée avec React et Vite,
+est déployée sur la plateforme Vercel et accessible depuis un navigateur web.
+
+Les services backend sont assurés par Supabase, qui fournit
+l’authentification des utilisateurs, la base de données PostgreSQL, le stockage
+des fichiers ainsi que les fonctions serveur nécessaires à certaines opérations
+métier.
+
+L’assistant pédagogique ARIA communique avec le modèle Gemini 2.5 Flash afin
+de générer des réponses contextualisées à partir des contenus pédagogiques.
+Les paiements des formations premium sont traités par la plateforme Stripe.
+
+Enfin, les animations pédagogiques réalisées avec Manim sont exportées sous
+forme de vidéos puis stockées dans l’espace de stockage Supabase afin d’être
+intégrées aux cours de la plateforme.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/deploiement.png}
+    \caption{Diagramme de déploiement de IAAI eLearning 101}
+    \label{fig:deployment}
+\end{figure}
+\newpage
+\section{Conception de la base de données}
+
+\subsection{Modèle Conceptuel de Données (MCD)}
+
+Le Modèle Conceptuel de Données (MCD) permet de représenter les entités
+métier de la plateforme ainsi que les relations existantes entre elles,
+indépendamment du système de gestion de base de données utilisé.
+
+Le MCD de la plateforme IAAI eLearning 101 s'articule autour de la gestion
+des apprenants, des modules de formation, des leçons, des évaluations,
+du suivi de progression ainsi que des fonctionnalités communautaires.
+
+Les principales entités identifiées sont :
+
+\begin{itemize}
+    \item \textbf{Profil} : représente les utilisateurs de la plateforme.
+    \item \textbf{Module} : représente une formation ou un cours.
+    \item \textbf{Leçon} : unité pédagogique appartenant à un module.
+    \item \textbf{Quiz} : évaluation associée à un module.
+    \item \textbf{Question} : question appartenant à un quiz.
+    \item \textbf{Réponse} : réponse proposée pour une question.
+    \item \textbf{TentativeQuiz} : résultat obtenu par un apprenant.
+    \item \textbf{Progression} : suivi de l'avancement d'un apprenant.
+    \item \textbf{Certificat} : document généré après validation d'un module.
+    \item \textbf{Publication} : message publié dans l'espace communautaire.
+    \item \textbf{Commentaire} : réaction à une publication.
+    \item \textbf{Notification} : message envoyé à l'utilisateur.
+    \item \textbf{Recommandation} : suggestion personnalisée de formation.
+\end{itemize}
+
+Les relations principales sont les suivantes :
+
+\begin{itemize}
+    \item Un profil peut suivre plusieurs modules.
+    \item Un module contient plusieurs leçons.
+    \item Un module possède un quiz.
+    \item Un quiz contient plusieurs questions.
+    \item Une question possède plusieurs réponses.
+    \item Un profil peut effectuer plusieurs tentatives de quiz.
+    \item Un profil possède plusieurs enregistrements de progression.
+    \item Un profil peut obtenir une certificat.
+    \item Un profil peut publier plusieurs publications.
+    \item Une publication peut recevoir plusieurs commentaires.
+    \item Un profil peut recevoir plusieurs notifications.
+    \item Un profil peut recevoir plusieurs recommandations de cours.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/mcd (1).png}
+    \caption{Modèle Conceptuel de Données de la plateforme IAAI eLearning 101}
+    \label{fig:mcd}
+\end{figure}
+
+L'analyse du MCD met en évidence une organisation cohérente des données
+autour des activités d'apprentissage, d'évaluation, de suivi pédagogique
+et d'interaction communautaire. Cette modélisation constitue la base de
+la conception logique puis physique de la base de données implémentée sur
+Supabase PostgreSQL.
+\newpage
+\subsection{Modèle Logique de Données (MLD)}
+
+Le Modèle Logique de Données (MLD) représente la traduction du Modèle Conceptuel
+de Données vers un modèle relationnel compatible avec PostgreSQL, utilisé par
+Supabase. Il définit les différentes tables du système, leurs attributs, ainsi
+que les relations établies entre elles à travers les clés primaires et les clés
+étrangères.
+
+Le MLD constitue la base de l'implémentation physique de la base de données et
+garantit la cohérence, l'intégrité et la traçabilité des données manipulées par
+la plateforme.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/MLD.png}
+    \caption{Modèle Logique de Données de la plateforme IAAI eLearning 101}
+    \label{fig:mld}
+\end{figure}
+
+\subsection{Description des tables principales}
+
+Les tables principales représentent les entités métier essentielles de la
+plateforme d'apprentissage.
+
+\subsubsection{profiles}
+
+La table \texttt{profiles} contient les informations des utilisateurs de la
+plateforme.
+
+\begin{table}[H]
+\centering
+\caption{Description de la table profiles}
+\begin{tabularx}{\textwidth}{|p{3cm}|X|p{2.5cm}|p{1.5cm}|}
+\hline
+\textbf{Attribut} & \textbf{Description} & \textbf{Type} & \textbf{Clé} \\
+\hline
+id & Identifiant unique de l'utilisateur (lié à auth.users) & UUID & PK \\
+email & Adresse électronique & TEXT & \\
+full\_name & Nom complet & TEXT & \\
+avatar\_url & Photo de profil & TEXT & \\
+role & Rôle utilisateur (LEARNER, ADMIN, SUPER\_ADMIN) & TEXT & \\
+plan & Formule de l'apprenant (free, premium) & TEXT & \\
+preferred\_lang & Langue préférée (fr, ar) & TEXT & \\
+stripe\_session\_id & Référence de la session de paiement Stripe & TEXT & \\
+created\_at & Date de création & TIMESTAMP & \\
+updated\_at & Date de modification & TIMESTAMP & \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{modules}
+
+La table \texttt{modules} représente les formations proposées sur la plateforme.
+
+\begin{table}[H]
+\centering
+\caption{Description de la table modules}
+\begin{tabularx}{\textwidth}{|p{3cm}|X|p{2.5cm}|p{1.5cm}|}
+\hline
+Attribut & Description & Type & Clé \\
+\hline
+id & Identifiant du module & UUID & PK \\
+title & Titre du module & TEXT & \\
+description & Description détaillée & TEXT & \\
+order\_index & Position du module dans le parcours & INTEGER & \\
+level & Niveau (débutant, intermédiaire, avancé) & TEXT & \\
+duration\_minutes & Durée estimée du module & INTEGER & \\
+is\_premium & Module premium ou gratuit & BOOLEAN & \\
+is\_published & Module publié ou brouillon & BOOLEAN & \\
+thumbnail\_url & Image de couverture & TEXT & \\
+created\_at & Date de création & TIMESTAMP & \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{lessons}
+
+Cette table contient les leçons associées aux modules.
+
+\begin{table}[H]
+\centering
+\caption{Description de la table lessons}
+\begin{tabularx}{\textwidth}{|p{3cm}|X|p{2.5cm}|p{1.5cm}|}
+\hline
+Attribut & Description & Type & Clé \\
+\hline
+id & Identifiant de la leçon & UUID & PK \\
+module\_id & Module parent & UUID & FK \\
+title & Titre de la leçon & TEXT & \\
+content\_notes & Contenu pédagogique (notes de cours) & TEXT & \\
+video\_url & URL de la vidéo (Manim) & TEXT & \\
+duration\_minutes & Durée estimée de la leçon & INTEGER & \\
+order\_index & Ordre d'affichage & INTEGER & \\
+is\_free & Leçon gratuite (accessible sans premium) & BOOLEAN & \\
+is\_published & Leçon publiée ou brouillon & BOOLEAN & \\
+created\_at & Date de création & TIMESTAMP & \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{quizzes}
+
+Cette table représente les quiz associés aux modules.
+
+\begin{table}[H]
+\centering
+\caption{Description de la table quizzes}
+\begin{tabularx}{\textwidth}{|p{3cm}|X|p{2.5cm}|p{1.5cm}|}
+\hline
+Attribut & Description & Type & Clé \\
+\hline
+id & Identifiant du quiz & UUID & PK \\
+module\_id & Module associé & UUID & FK \\
+title & Titre du quiz & VARCHAR(255) & \\
+pass\_score & Score minimum de réussite & INTEGER & \\
+created\_at & Date de création & TIMESTAMP & \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{questions}
+
+Cette table contient les questions des quiz.
+
+\begin{table}[H]
+\centering
+\caption{Description de la table questions}
+\begin{tabularx}{\textwidth}{|p{3cm}|X|p{2.5cm}|p{1.5cm}|}
+\hline
+Attribut & Description & Type & Clé \\
+\hline
+id & Identifiant de la question & UUID & PK \\
+quiz\_id & Quiz associé & UUID & FK \\
+question\_text & Énoncé de la question & TEXT & \\
+order\_index & Ordre d'affichage & INTEGER & \\
+created\_at & Date de création & TIMESTAMP & \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{answers}
+
+Cette table stocke les réponses associées aux questions.
+
+\begin{table}[H]
+\centering
+\caption{Description de la table answers}
+\begin{tabularx}{\textwidth}{|p{3cm}|X|p{2.5cm}|p{1.5cm}|}
+\hline
+Attribut & Description & Type & Clé \\
+\hline
+id & Identifiant de la réponse & UUID & PK \\
+question\_id & Question associée & UUID & FK \\
+answer\_text & Texte de la réponse & TEXT & \\
+is\_correct & Réponse correcte ou non & BOOLEAN & \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{quiz\_attempts}
+
+Cette table enregistre les tentatives effectuées par les apprenants.
+
+\begin{table}[H]
+\centering
+\caption{Description de la table quiz\_attempts}
+\begin{tabularx}{\textwidth}{|p{3cm}|X|p{2.5cm}|p{1.5cm}|}
+\hline
+Attribut & Description & Type & Clé \\
+\hline
+id & Identifiant de la tentative & UUID & PK \\
+user\_id & Apprenant concerné & UUID & FK \\
+quiz\_id & Quiz concerné & UUID & FK \\
+module\_id & Module concerné & UUID & FK \\
+score & Résultat obtenu (0--100) & INTEGER & \\
+passed & Quiz réussi ou non & BOOLEAN & \\
+answers\_given & Réponses soumises (JSON) & JSONB & \\
+attempted\_at & Date de la tentative & TIMESTAMP & \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{certificates}
+
+Cette table contient les certificats générés après validation des formations.
+
+\begin{table}[H]
+\centering
+\caption{Description de la table certificates}
+\begin{tabularx}{\textwidth}{|p{3cm}|X|p{2.5cm}|p{1.5cm}|}
+\hline
+Attribut & Description & Type & Clé \\
+\hline
+id & Identifiant du certificat & UUID & PK \\
+user\_id & Apprenant concerné & UUID & FK \\
+module\_id & Module validé & UUID & FK \\
+certificate\_number & Numéro unique de vérification & TEXT & \\
+score & Score final obtenu & INTEGER & \\
+issued\_at & Date d'émission & TIMESTAMP & \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Description des tables complémentaires}
+
+Les tables complémentaires permettent d'assurer les fonctionnalités avancées de
+la plateforme telles que le suivi pédagogique, les statistiques, la
+personnalisation, les notifications et l'assistant IA.
+
+\begin{itemize}
+
+\item \textbf{user\_progress} : stockage de la progression des apprenants dans
+les différents modules.
+
+\item \textbf{user\_activity} : journalisation des actions effectuées par les
+utilisateurs.
+
+\item \textbf{user\_stats} : statistiques globales des apprenants (XP, modules
+terminés, certificats obtenus, etc.).
+
+\item \textbf{notifications} : gestion des notifications système et
+pédagogiques.
+
+\item \textbf{community\_posts} : publications créées dans l'espace
+communautaire.
+
+\item \textbf{community\_comments} : commentaires associés aux publications.
+
+\item \textbf{course\_recommendations} : recommandations de formations générées
+par le moteur d'intelligence artificielle.
+
+\item \textbf{lesson\_chunks} : segments de contenu pédagogique utilisés dans
+l'architecture RAG de l'assistant ARIA afin d'effectuer des recherches
+vectorielles avec l'extension pgvector.
+
+\end{itemize}
+
+\subsection{Relations principales du modèle}
+
+Les principales relations du modèle sont les suivantes :
+
+\begin{itemize}
+
+\item Un utilisateur (\texttt{profiles}) peut posséder plusieurs certificats,
+notifications, statistiques et enregistrements de progression.
+
+\item Un module (\texttt{modules}) contient plusieurs leçons
+(\texttt{lessons}) et plusieurs quiz (\texttt{quizzes}).
+
+\item Un quiz contient plusieurs questions.
+
+\item Une question contient plusieurs réponses possibles.
+
+\item Un apprenant peut effectuer plusieurs tentatives de quiz.
+
+\item Une publication communautaire peut recevoir plusieurs commentaires.
+
+\item Un module peut être recommandé à plusieurs utilisateurs à travers la table
+\texttt{course\_recommendations}.
+
+\item Une leçon peut être découpée en plusieurs segments stockés dans la table
+\texttt{lesson\_chunks} afin d'alimenter le moteur RAG de l'assistant ARIA.
+
+\end{itemize}
+
+Le modèle logique ainsi défini assure la cohérence des données, facilite les
+évolutions futures du système et garantit une intégration optimale avec les
+services proposés par Supabase et PostgreSQL.
+
+
+% ============================================================
+%  CHAPITRE IV : RÉALISATION
+% ============================================================
+\chapter{Réalisation}
+
+\section{Introduction}
+
+Après l'analyse et la conception de la plateforme IAAI eLearning 101, cette phase
+est consacrée à la réalisation de la solution proposée. Elle présente
+l'environnement matériel et logiciel utilisé, les choix technologiques retenus,
+ainsi que l'implémentation des principales fonctionnalités du système.
+Une attention particulière est accordée à l'intégration de l'assistant
+pédagogique intelligent ARIA basé sur l'architecture RAG
+(Retrieval-Augmented Generation).
+
+\section{Environnement de développement}
+
+\subsection{Matériel utilisé}
+
+Le développement et les tests ont été réalisés sur une station de travail
+disposant des caractéristiques suivantes :
+
+\begin{itemize}
+    \item Processeur : Intel Core i7 (12\ieme génération)
+    \item Mémoire vive : 32 Go DDR5
+    \item Stockage : SSD NVMe 1 To
+    \item Système d'exploitation : Windows 11
+\end{itemize}
+
+\subsection{Logiciels utilisés}
+
+\begin{table}[H]
+\centering
+\caption{Environnement logiciel de développement}
+\label{tab:env_logiciel}
+\begin{tabular}{|l|l|p{6cm}|}
+\hline
+\textbf{Logiciel} & \textbf{Version} & \textbf{Usage} \\
+\hline
+Visual Studio Code & 1.90 & Développement et débogage \\
+\hline
+Node.js & 20.12 & Exécution JavaScript côté serveur \\
+\hline
+npm & 10.5 & Gestionnaire de paquets \\
+\hline
+Git & 2.43 & Gestion de versions \\
+\hline
+Postman & 10.24 & Test des API \\
+\hline
+Docker Desktop & 4.28 & Conteneurisation \\
+\hline
+Figma & Web & Maquettage UI/UX \\
+\hline
+Google Chrome & 125 & Tests fonctionnels \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Choix technologiques}
+
+Les technologies retenues ont été sélectionnées afin de garantir
+la performance, la maintenabilité et l'évolutivité de la plateforme.
+
+\begin{table}[H]
+\centering
+\caption{Technologies utilisées}
+\label{tab:technologies}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{2.5cm}|X|p{3.8cm}|}
+\hline
+\textbf{Technologie} & \textbf{Rôle} & \textbf{Justification} \\
+\hline
+React 19 & Frontend & Bibliothèque d'interface moderne et performante \\
+\hline
+Vite 8 & Build Tool & Compilation et rechargement à chaud très rapides \\
+\hline
+Tailwind CSS 3 & Design UI & Développement rapide d'interfaces responsive \\
+\hline
+React Router 7 & Routage & Navigation côté client (SPA) \\
+\hline
+Zustand 5 & Gestion d'état & Store global léger et performant \\
+\hline
+React Hook Form + Zod & Formulaires & Gestion et validation typée des formulaires \\
+\hline
+Framer Motion & Animations UI & Transitions et micro-interactions fluides \\
+\hline
+Recharts & Visualisation & Graphiques de progression et de statistiques \\
+\hline
+Supabase & Backend (BaaS) & Authentification, base de données et Edge Functions intégrées \\
+\hline
+PostgreSQL & Base de données & Robustesse, fiabilité et propriétés ACID \\
+\hline
+pgvector & Recherche vectorielle & Support du moteur RAG (embeddings 768 dimensions) \\
+\hline
+Manim Community Edition &
+Génération d'animations pédagogiques &
+Création de vidéos explicatives scientifiques de haute qualité \\
+
+\hline
+Gemini 2.5 Flash & IA générative & Réponses rapides et pertinentes de l'assistant ARIA \\
+\hline
+Stripe Checkout & Paiement & Solution de paiement en ligne sécurisée (PCI-DSS) \\
+\hline
+i18next & Internationalisation & Support multilingue (français/arabe) et mode RTL \\
+\hline
+Vercel & Hébergement & Déploiement continu du frontend via CDN mondial \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Réalisation des fonctionnalités}
+\subsection{Page d'accueil (Landing Page)}
+
+La page d'accueil constitue le point d'entrée principal de la plateforme.
+Elle présente les objectifs du projet, les fonctionnalités principales,
+les formations disponibles ainsi que les avantages de l'assistant intelligent
+ARIA. Elle permet également d'accéder rapidement aux pages d'inscription
+et de connexion.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.9\textheight,keepaspectratio]{images/landing_page.png}
+    \caption{Page d'accueil de la plateforme IAAI eLearning 101}
+    \label{fig:landing_page}
+\end{figure}
+\subsection{Authentification}
+
+La plateforme utilise le système d'authentification fourni par Supabase.
+Les utilisateurs peuvent créer un compte, se connecter, réinitialiser leur mot
+de passe et vérifier leur adresse électronique.
+
+% Capture d'écran inscription
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{images/register.png}
+\caption{Page d'inscription}
+\label{fig:register}
+\end{figure}
+
+% Capture d'écran connexion
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{images/login.png}
+\caption{Page de connexion}
+\label{fig:login}
+\end{figure}
+
+\subsection{Catalogue des formations}
+
+Les formations sont affichées sous forme de cartes interactives.
+L'utilisateur peut effectuer des recherches et appliquer des filtres afin de
+trouver rapidement le contenu souhaité.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/catalogue.png}
+\caption{Catalogue des formations}
+\label{fig:catalogue}
+\end{figure}
+
+\subsection{Parcours pédagogique}
+
+Chaque formation est organisée en modules et en leçons.
+Une barre de progression permet de suivre l'avancement de l'apprenant.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/course-view.png}
+\caption{Parcours pédagogique}
+\label{fig:course}
+\end{figure}
+\subsection{Création de contenus pédagogiques avec Manim}
+
+Afin d'enrichir l'expérience d'apprentissage, certaines vidéos pédagogiques
+ont été produites à l'aide de Manim Community Edition. Cet outil permet de
+générer des animations mathématiques et scientifiques programmables à partir
+de scripts Python.
+
+L'utilisation de Manim garantit :
+
+\begin{itemize}
+    \item une qualité visuelle élevée ;
+    \item des animations reproductibles ;
+    \item une parfaite intégration avec les contenus techniques ;
+    \item une meilleure compréhension des concepts complexes.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/manim.png}
+    \caption{Exemple d'animation pédagogique réalisée avec Manim}
+    \label{fig:manim}
+\end{figure}
+\subsection{Quiz et évaluations}
+
+Les connaissances acquises sont validées à travers des quiz interactifs.
+La correction est effectuée automatiquement et les résultats sont affichés
+immédiatement après la soumission.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/page-quiz.jpg}
+\caption{Interface de quiz}
+\label{fig:quiz}
+\end{figure}
+
+\subsection{Tableau de bord}
+
+Le tableau de bord centralise les statistiques de progression, les modules
+complétés ainsi que les certificats obtenus.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/dashboard.png}
+\caption{Tableau de bord apprenant}
+\label{fig:dashboard}
+\end{figure}
+
+\subsection{Gestion des certificats}
+
+À l'issue de la validation de l'ensemble du parcours, un certificat est généré
+automatiquement et associé à un numéro unique de vérification. Depuis sa page
+de certificat, l'apprenant peut~:
+
+\begin{itemize}
+    \item \textbf{télécharger} le certificat au format PDF~;
+    \item le \textbf{partager sur LinkedIn} grâce à l'intégration du flux officiel
+    « \textit{Add to profile} », pré-rempli avec le nom de la certification,
+    l'organisme émetteur, la date et le numéro du certificat~;
+    \item \textbf{copier un lien public de vérification} permettant à un tiers
+    (employeur, recruteur) de confirmer l'authenticité du certificat.
+\end{itemize}
+
+Une page publique de vérification (\texttt{/verify/<numéro>}), accessible sans
+connexion, affiche l'authenticité du certificat ainsi que les informations non
+sensibles associées (titulaire, score, date).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{images/certificate.png}
+\caption{Certificat généré}
+\label{fig:certificate}
+\end{figure}
+
+\subsection{Paiement des formations premium}
+
+Les formations premium sont accessibles après validation d'un paiement
+effectué via Stripe Checkout.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{images/stripe-payment.png}
+\caption{Paiement sécurisé avec Stripe}
+\label{fig:stripe}
+\end{figure}
+
+\subsection{Administration}
+
+L'administrateur dispose d'une interface lui permettant de gérer les utilisateurs,
+les formations, les quiz et les contenus pédagogiques.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/admin-dashboard.png}
+\caption{Interface d'administration}
+\label{fig:admin}
+\end{figure}
+
+\subsection{Internationalisation}
+
+La plateforme prend en charge plusieurs langues, notamment le français et
+l'arabe, avec une gestion complète du mode RTL.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{images/arabic-interface.png}
+\caption{Version arabe de la plateforme}
+\label{fig:arabic}
+\end{figure}
+\newpage
+\section{Intégration de l'assistant ARIA}
+
+\subsection{Présentation d'ARIA}
+
+ARIA (Artificial Intelligence Responsive Assistant) est un assistant
+conversationnel intelligent intégré à la plateforme. Son rôle est
+d'accompagner l'apprenant durant son parcours en répondant à ses questions
+sur les contenus pédagogiques.
+
+\subsection{Architecture technique}
+
+ARIA repose sur une architecture RAG permettant de combiner
+la puissance des modèles génératifs avec les ressources pédagogiques internes.
+
+% Packages nécessaires dans le préambule :
+% \usepackage{tikz}
+% \usetikzlibrary{positioning, arrows.meta}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1cm and 2cm,
+        box/.style={rectangle, rounded corners, draw=black, thick, 
+                     fill=blue!10, minimum width=4cm, minimum height=1.1cm, 
+                     align=center, font=\small},
+        boxalt/.style={rectangle, rounded corners, draw=black, thick, 
+                        fill=orange!15, minimum width=4cm, minimum height=1.1cm, 
+                        align=center, font=\small},
+        boxedge/.style={rectangle, rounded corners, draw=black, thick, 
+                         fill=green!10, minimum width=4cm, minimum height=1.1cm, 
+                         align=center, font=\small},
+        arrow/.style={-{Latex[length=2.5mm]}, thick}
+    ]
+    
+    % Noeuds
+    \node[box] (user) {Utilisateur\\\textit{(pose une question)}};
+    \node[boxedge, below=of user] (edge) {Supabase Edge Function\\\textit{(orchestration)}};
+    \node[box, below=of edge] (embed) {Génération de l'embedding\\de la requête};
+    \node[boxalt, below=of embed] (vecdb) {Recherche vectorielle\\(pgvector -- similarité cosinus)};
+    \node[box, below=of vecdb] (retrieve) {Récupération des\\chunks pertinents (Top-k)};
+    \node[boxalt, below=of retrieve] (prompt) {Construction du prompt augmenté\\(Contexte + Question)};
+    \node[box, below=of prompt] (llm) {LLM génératif\\(Gemini 2.5 Flash)};
+    \node[boxedge, below=of llm] (response) {Réponse générée\\renvoyée à l'utilisateur};
+    
+    % Flèches
+    \draw[arrow] (user) -- (edge);
+    \draw[arrow] (edge) -- (embed);
+    \draw[arrow] (embed) -- (vecdb);
+    \draw[arrow] (vecdb) -- (retrieve);
+    \draw[arrow] (retrieve) -- (prompt);
+    \draw[arrow] (prompt) -- (llm);
+    \draw[arrow] (llm) -- (response);
+    \draw[arrow] (response.west) -- ++(-2.5,0) |- (user.west);
+    
+    \end{tikzpicture}
+    \caption{Architecture du système RAG (Retrieval-Augmented Generation) d'ARIA}
+    \label{fig:rag-architecture}
+\end{figure}
+
+\subsection{Pipeline RAG}
+
+Le fonctionnement du pipeline RAG se déroule selon les étapes suivantes :
+
+\begin{enumerate}
+    \item Extraction des contenus pédagogiques.
+    \item Découpage en fragments (chunks).
+    \item Génération des embeddings.
+    \item Stockage des vecteurs dans PostgreSQL via pgvector.
+    \item Recherche sémantique des contenus pertinents.
+    \item Génération de la réponse avec Gemini.
+\end{enumerate}
+
+\subsection{Intégration dans la plateforme}
+
+L'assistant ARIA est accessible depuis toutes les pages grâce à un widget de
+conversation flottant.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{images/aria-chat.png}
+\caption{Interface conversationnelle d'ARIA}
+\label{fig:aria_chat}
+\end{figure}
+
+\subsection{Avantages pédagogiques}
+
+L'intégration d'ARIA apporte plusieurs bénéfices :
+
+\begin{itemize}
+    \item Assistance pédagogique en temps réel.
+    \item Réponses contextualisées à partir des contenus de cours.
+    \item Disponibilité continue.
+    \item Réduction des hallucinations grâce à la recherche documentaire.
+    \item Amélioration de l'engagement des apprenants.
+\end{itemize}
+\section{Sécurité de la plateforme}
+
+La sécurité a constitué une préoccupation transversale tout au long du
+développement de la plateforme \textit{IAAI eLearning 101}. Compte tenu de son
+modèle économique (contenu premium payant) et du traitement de données
+personnelles des apprenants, une architecture de sécurité multicouche a été
+mise en place, reposant principalement sur le principe du moindre privilège et
+sur une application systématique des contrôles \textbf{côté serveur} plutôt que
+côté client.
+
+\subsection{Authentification et gestion des sessions}
+
+L'authentification s'appuie sur Supabase Auth, qui délivre des jetons
+\textit{JWT} signés et gère le cycle de vie des sessions (rafraîchissement,
+expiration, révocation). Les mots de passe ne sont jamais stockés en clair.
+Un mécanisme de verrouillage anti-force-brute a été implémenté directement au
+niveau de la base de données~: après plusieurs tentatives infructueuses, la
+connexion est temporairement bloquée. Ce verrouillage est calculé par couple
+\texttt{(email, adresse IP)} afin d'éviter qu'un attaquant ne puisse bloquer à
+distance le compte d'une victime légitime.
+
+\subsection{Contrôle d'accès par Row Level Security (RLS)}
+
+Chaque table sensible est protégée par des politiques \textit{Row Level
+Security} de PostgreSQL, garantissant qu'un utilisateur ne peut accéder qu'aux
+données qui lui sont autorisées, indépendamment du point d'entrée (API REST
+générée, requête directe, etc.). Ce contrôle est complété par des protections
+\textbf{au niveau colonne} pour les champs les plus critiques~:
+
+\begin{itemize}
+    \item \textbf{Protection du plan premium~:} un déclencheur (\textit{trigger})
+    empêche tout apprenant de modifier lui-même son champ \texttt{plan} ou ses
+    références de paiement. Seuls le webhook Stripe (via le rôle
+    \texttt{service\_role}) et les administrateurs peuvent faire évoluer un
+    compte vers l'offre premium, ce qui rend impossible le contournement du
+    paiement de 299~DH.
+
+    \item \textbf{Attribution sécurisée des rôles~:} lors de l'inscription, le
+    rôle de tout nouveau compte est forcé à \texttt{LEARNER} côté serveur. Un
+    utilisateur ne peut donc pas s'auto-attribuer le rôle d'administrateur via
+    les métadonnées d'inscription.
+\end{itemize}
+
+\subsection{Intégrité des évaluations}
+
+Afin de préserver la valeur pédagogique des quiz, la colonne indiquant la
+bonne réponse (\texttt{is\_correct}) n'est pas lisible par les clients~: un
+apprenant ne peut donc pas récupérer la grille de correction avant de composer.
+La correction et le calcul du score sont effectués intégralement côté serveur.
+Les administrateurs conservent l'accès aux corrigés via une fonction
+\texttt{SECURITY DEFINER} dédiée, protégée par une vérification de rôle.
+
+\subsection{Protection du contenu premium}
+
+L'accès aux leçons et aux segments de contenu (\texttt{lesson\_chunks}) des
+modules 2 à 8 est contrôlé côté serveur en fonction des indicateurs
+\texttt{is\_free} et du \texttt{plan} de l'utilisateur. La restriction ne repose
+donc pas uniquement sur l'interface~: même une requête directe à la base ne
+permet pas à un compte gratuit d'accéder au contenu payant.
+
+\subsection{Durcissement des fonctions et de l'assistant ARIA}
+
+Les fonctions \texttt{SECURITY DEFINER} utilisent un \texttt{search\_path} fixe
+afin de prévenir les attaques par détournement de schéma. L'assistant ARIA a
+par ailleurs été sécurisé contre les abus~: authentification obligatoire,
+bornage de la taille des requêtes et de l'historique de conversation, et quota
+d'utilisation quotidien pour les comptes gratuits, limitant ainsi les coûts
+d'appel au modèle Gemini.
+
+\subsection{Vérification publique des certificats}
+
+La vérification d'authenticité des certificats est assurée par une fonction
+dédiée, accessible publiquement, qui n'expose que des informations non
+sensibles (nom du titulaire, numéro du certificat, score et date d'obtention),
+sans jamais divulguer l'identifiant interne ni l'adresse électronique de
+l'apprenant.
+
+\section{Déploiement de la plateforme}
+
+Après le développement et les phases de tests, la plateforme IAAI eLearning 101
+a été déployée sur une infrastructure cloud moderne afin de garantir
+la disponibilité, la sécurité et la scalabilité de l'application.
+
+L'architecture de déploiement repose sur plusieurs services spécialisés :
+Vercel pour l'hébergement du frontend, Supabase pour le backend et la base de
+données, Gemini pour les fonctionnalités d'intelligence artificielle et Stripe
+pour la gestion des paiements en ligne.
+
+\subsection{Déploiement du Frontend avec Vercel}
+
+L'application frontend développée avec React et Vite est hébergée sur la
+plateforme Vercel. Cette solution permet un déploiement continu à partir du
+dépôt GitHub du projet et fournit un réseau CDN mondial garantissant des temps
+de chargement optimaux.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/vercel_dashboard.png}
+    \caption{Tableau de bord du projet sur Vercel}
+    \label{fig:vercel_dashboard}
+\end{figure}
+
+Les principaux avantages de Vercel sont :
+
+\begin{itemize}
+    \item Déploiement automatique à chaque mise à jour du dépôt GitHub.
+    \item Distribution mondiale via CDN.
+    \item Gestion simplifiée des variables d'environnement.
+    \item Surveillance des performances de l'application.
+\end{itemize}
+
+\subsection{Déploiement du Backend avec Supabase}
+
+Le backend de la plateforme repose sur Supabase qui fournit les services
+d'authentification, les API REST, le stockage de fichiers ainsi que les
+fonctions serveur (Edge Functions).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/supabase_dashboard.png}
+    \caption{Tableau de bord du projet sur Supabase}
+    \label{fig:supabase_dashboard}
+\end{figure}
+
+Supabase facilite considérablement le développement grâce à :
+
+\begin{itemize}
+    \item L'authentification intégrée.
+    \item Les API REST générées automatiquement.
+    \item Les politiques de sécurité Row Level Security (RLS).
+    \item Les Edge Functions exécutées côté serveur.
+\end{itemize}
+
+\subsection{Base de données PostgreSQL}
+
+Les données de la plateforme sont stockées dans une base PostgreSQL hébergée
+par Supabase. Cette base assure la persistance des informations relatives aux
+utilisateurs, modules, quiz, certificats et interactions avec ARIA.
+
+L'extension pgvector a été utilisée afin de permettre la recherche vectorielle
+nécessaire au fonctionnement du système RAG de l'assistant intelligent.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/postgresql_database.png}
+    \caption{Base de données PostgreSQL hébergée sur Supabase}
+    \label{fig:postgres_database}
+\end{figure}
+
+Les principaux avantages de PostgreSQL sont :
+
+\begin{itemize}
+    \item Robustesse et fiabilité.
+    \item Respect des propriétés ACID.
+    \item Support natif de pgvector.
+    \item Excellentes performances pour les requêtes complexes.
+\end{itemize}
+
+\subsection{Intégration de l'API Gemini}
+
+L'assistant pédagogique ARIA s'appuie sur le modèle Gemini 2.5 Flash fourni
+par Google AI. Les requêtes des utilisateurs sont transmises à Gemini après
+enrichissement du contexte via le mécanisme RAG.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/gemini_api.png}
+    \caption{Configuration de l'API Gemini}
+    \label{fig:gemini_api}
+\end{figure}
+
+L'utilisation de Gemini permet :
+
+\begin{itemize}
+    \item La compréhension du langage naturel.
+    \item La génération de réponses contextualisées.
+    \item Une faible latence de traitement.
+    \item Une bonne qualité de raisonnement.
+\end{itemize}
+
+\subsection{Intégration de Stripe}
+
+Stripe est utilisé pour gérer les paiements des formations premium. La solution
+garantit un haut niveau de sécurité et simplifie la gestion des transactions.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stripe_dashboard.png}
+    \caption{Interface de gestion Stripe}
+    \label{fig:stripe_dashboard}
+\end{figure}
+
+Stripe offre notamment :
+
+\begin{itemize}
+    \item La conformité PCI-DSS.
+    \item Le paiement sécurisé par carte bancaire.
+    \item Le suivi des transactions.
+    \item La gestion simplifiée des abonnements.
+\end{itemize}
+
+\subsection{Bilan du déploiement}
+
+L'utilisation conjointe de Vercel, Supabase, PostgreSQL, Gemini et Stripe a
+permis de construire une architecture moderne, scalable et sécurisée. Cette
+infrastructure répond efficacement aux besoins fonctionnels et techniques de la
+plateforme IAAI eLearning 101 tout en facilitant sa maintenance et son évolution
+future.
+%============================================================
+%  CHAPITRE V : TESTS ET VALIDATION
+% ============================================================
+\newpage
+\chapter{Tests et Validation}
+
+\section{Introduction}
+
+Après la phase de réalisation, plusieurs campagnes de tests ont été effectuées afin
+de vérifier la conformité de la plateforme \textit{IAAI eLearning 101} aux
+spécifications fonctionnelles et techniques définies dans le cahier des charges.
+
+Ces tests ont permis de valider le bon fonctionnement des différents modules :
+authentification, gestion des formations, quiz, certifications, paiements,
+assistant intelligent ARIA ainsi que le déploiement complet de la plateforme.
+
+\section{Objectifs des tests}
+
+Les tests réalisés visent à :
+
+\begin{itemize}
+    \item Vérifier le bon fonctionnement des fonctionnalités développées.
+    \item Garantir l'intégrité et la sécurité des données.
+    \item Valider les performances générales de la plateforme.
+    \item Contrôler la qualité des réponses générées par ARIA.
+    \item Vérifier le bon fonctionnement du déploiement en environnement réel.
+\end{itemize}
+
+\section{Tests fonctionnels}
+
+\subsection{Authentification}
+
+Les fonctionnalités d'inscription, de connexion et de réinitialisation de mot
+de passe ont été testées à l'aide du système d'authentification fourni par
+Supabase Auth.
+
+\begin{table}[H]
+\centering
+\caption{Tests du module d'authentification}
+\label{tab:test_auth}
+\begin{tabularx}{\textwidth}{|p{4cm}|X|c|}
+\hline
+\textbf{Cas de test} & \textbf{Résultat attendu} & \textbf{Statut} \\
+\hline
+Création d'un compte valide & Création du compte et envoi de l'email de confirmation & Succès \\
+\hline
+Connexion avec identifiants valides & Accès au tableau de bord & Succès \\
+\hline
+Connexion avec mot de passe incorrect & Affichage d'un message d'erreur & Succès \\
+\hline
+Réinitialisation du mot de passe & Réception du lien de réinitialisation & Succès \\
+\hline
+\end{tabularx}
+\end{table}
+
+% Capture à ajouter
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{images/login_test.png}
+\caption{Validation du processus d'authentification}
+\label{fig:test_login}
+\end{figure}
+
+\subsection{Catalogue des formations}
+
+Le catalogue des formations a été testé afin de vérifier l'affichage dynamique
+des modules ainsi que les fonctionnalités de recherche et de filtrage.
+
+\begin{table}[H]
+\centering
+\caption{Tests du catalogue de formations}
+\label{tab:test_catalogue}
+\begin{tabularx}{\textwidth}{|p{4cm}|X|c|}
+\hline
+\textbf{Cas de test} & \textbf{Résultat attendu} & \textbf{Statut} \\
+\hline
+Affichage du catalogue & Chargement des formations & Succès \\
+\hline
+Recherche par mot-clé & Résultats pertinents & Succès \\
+\hline
+Filtrage par catégorie & Filtrage correct des cours & Succès \\
+\hline
+Accès à une formation & Affichage du détail du cours & Succès \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/catalogue_test.png}
+\caption{Validation du catalogue des formations}
+\label{fig:test_catalogue}
+\end{figure}
+\subsection{Quiz et évaluations}
+
+Les mécanismes d'évaluation ont été testés afin de vérifier l'enregistrement des
+réponses, le calcul des scores et la validation des conditions de réussite.
+
+\begin{table}[H]
+\centering
+\caption{Tests du système de quiz}
+\label{tab:test_quiz}
+\begin{tabularx}{\textwidth}{|p{4cm}|X|c|}
+\hline
+\textbf{Cas de test} & \textbf{Résultat attendu} & \textbf{Statut} \\
+\hline
+Soumission d'un quiz & Réponses enregistrées & Succès \\
+\hline
+Calcul du score & Score calculé correctement & Succès \\
+\hline
+Validation du seuil de réussite & Attribution du statut réussi/échoué & Succès \\
+\hline
+Historique des tentatives & Sauvegarde correcte & Succès \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{images/quiz_test.png}
+\caption{Validation du système de quiz}
+\label{fig:test_quiz}
+\end{figure}
+
+\subsection{Certificats}
+
+Les certificats sont générés automatiquement après validation d'un module.
+
+\begin{table}[H]
+\centering
+\caption{Tests du système de certificats}
+\label{tab:test_cert}
+\begin{tabularx}{\textwidth}{|p{4cm}|X|c|}
+\hline
+\textbf{Cas de test} & \textbf{Résultat attendu} & \textbf{Statut} \\
+\hline
+Validation des conditions & Vérification correcte & Succès \\
+\hline
+Génération PDF & Création du certificat & Succès \\
+\hline
+Téléchargement & Fichier accessible & Succès \\
+\hline
+Code de vérification & Code unique généré & Succès \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{images/certificate_test.png}
+\caption{Certificat généré automatiquement}
+\label{fig:test_certificate}
+\end{figure}
+
+\subsection{Paiement Stripe}
+
+Les paiements ont été validés à l'aide du mode Sandbox de Stripe.
+
+\begin{table}[H]
+\centering
+\caption{Tests du système de paiement}
+\label{tab:test_payment}
+\begin{tabularx}{\textwidth}{|p{4cm}|X|c|}
+\hline
+\textbf{Cas de test} & \textbf{Résultat attendu} & \textbf{Statut} \\
+\hline
+Création de session Stripe & Session créée & Succès \\
+\hline
+Paiement accepté & Déblocage du contenu premium & Succès \\
+\hline
+Paiement refusé & Message d'erreur & Succès \\
+\hline
+Réception du webhook & Mise à jour du statut & Succès \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{images/stripe_test.png}
+\caption{Validation du paiement Stripe}
+\label{fig:test_stripe}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{images/stripe_test2.png}
+\caption{Paiement réussi}
+\label{fig:test_paiement}
+\end{figure}
+
+\subsection{Validation de l'assistant ARIA}
+
+Plusieurs questions issues du contenu pédagogique ont été soumises à ARIA afin
+de vérifier la pertinence des réponses générées.
+
+\begin{table}[H]
+\centering
+\caption{Tests de l'assistant ARIA}
+\label{tab:test_aria}
+\begin{tabularx}{\textwidth}{|p{5cm}|X|c|}
+\hline
+\textbf{Question} & \textbf{Résultat observé} & \textbf{Statut} \\
+\hline
+Qu'est-ce que le Machine Learning ? & Réponse cohérente basée sur les cours & Succès \\
+\hline
+Explique le Deep Learning & Réponse contextualisée & Succès \\
+\hline
+Différence IA faible / IA forte & Réponse correcte et détaillée & Succès \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{images/aria_test.png}
+\caption{Exemple d'interaction avec ARIA}
+\label{fig:test_aria}
+\end{figure}
+
+\section{Tests de sécurité}
+
+Au-delà de la vérification des mécanismes standards (authentification JWT,
+politiques RLS, HTTPS, paiement Stripe), une série de tests d'abus a été menée
+afin de valider les mesures de durcissement mises en place. Chaque scénario
+simule une tentative d'exploitation d'une faille potentielle et vérifie qu'elle
+est bien bloquée côté serveur.
+
+\begin{table}[H]
+\centering
+\caption{Tests des mécanismes de sécurité}
+\label{tab:test_security}
+\begin{tabularx}{\textwidth}{|p{5.5cm}|X|c|}
+\hline
+\textbf{Cas de test} & \textbf{Résultat attendu} & \textbf{Statut} \\
+\hline
+Un apprenant tente de passer son compte en \texttt{premium} sans payer &
+Modification refusée par le déclencheur & Succès \\
+\hline
+Inscription avec un rôle \texttt{ADMIN} dans les métadonnées &
+Compte forcé au rôle \texttt{LEARNER} & Succès \\
+\hline
+Lecture de la grille de correction (\texttt{is\_correct}) par un apprenant &
+Colonne non accessible & Succès \\
+\hline
+Accès direct au contenu d'un module payant par un compte gratuit &
+Accès bloqué par la RLS & Succès \\
+\hline
+Tentatives de connexion répétées (force brute) &
+Verrouillage temporaire par (email, IP) & Succès \\
+\hline
+Envoi massif de requêtes à ARIA par un compte gratuit &
+Blocage après le quota quotidien & Succès \\
+\hline
+\end{tabularx}
+\end{table}
+
+Les principaux mécanismes de sécurité couverts par la plateforme sont~:
+
+\begin{itemize}
+\item Authentification JWT sécurisée et gestion des sessions.
+\item Contrôle d'accès basé sur les rôles (RBAC) et principe du moindre privilège.
+\item Politiques RLS (Row Level Security) et protections au niveau colonne.
+\item Fonctions \texttt{SECURITY DEFINER} à \texttt{search\_path} fixe.
+\item Protection HTTPS et paiement sécurisé via Stripe.
+\item Validation et bornage des requêtes API et de l'assistant ARIA.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/rls_policy.png}
+\caption{Exemple de politique RLS dans Supabase}
+\label{fig:rls}
+\end{figure}
+
+\section{Validation du déploiement}
+
+La plateforme a été déployée avec succès en environnement de production.
+
+\begin{table}[H]
+\centering
+\caption{Validation des composants déployés}
+\label{tab:deployment}
+\begin{tabular}{|l|c|}
+\hline
+Composant & Statut \\
+\hline
+Frontend Vercel & Opérationnel \\
+\hline
+Backend Supabase & Opérationnel \\
+\hline
+Base PostgreSQL & Opérationnelle \\
+\hline
+Gemini API & Opérationnelle \\
+\hline
+Stripe API & Opérationnelle \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{images/vercel_deployment.png}
+\caption{Déploiement de la plateforme sur Vercel}
+\label{fig:vercel_deployment}
+\end{figure}
+
+\section{Conclusion}
+
+L'ensemble des tests réalisés a permis de valider les fonctionnalités
+développées au sein de la plateforme \textit{IAAI eLearning 101}. Les résultats
+obtenus démontrent la stabilité de l'application, la fiabilité des mécanismes
+de sécurité, ainsi que la pertinence de l'assistant intelligent ARIA.
+
+Le déploiement sur Vercel et Supabase a également confirmé la capacité de la
+solution à fonctionner dans un environnement de production réel, tout en
+garantissant de bonnes performances et une expérience utilisateur fluide.
+
+% ============================================================
+%  CONCLUSION GÉNÉRALE
+% ============================================================
+\chapter*{Conclusion Générale}
+\addcontentsline{toc}{chapter}{Conclusion Générale}
+
+Ce stage de fin d'études réalisé au sein de l'Académie Internationale d'Intelligence Artificielle (IAAI) a permis la conception et le développement de la plateforme \textit{IAAI eLearning 101}, une solution d'apprentissage en ligne dédiée à la formation dans les domaines de l'intelligence artificielle et des technologies numériques.
+
+L'objectif principal du projet était de mettre en place une plateforme moderne permettant aux apprenants d'accéder à des contenus pédagogiques structurés, de suivre leur progression, de réaliser des évaluations et d'obtenir des certifications numériques. Un autre objectif majeur consistait à intégrer un assistant pédagogique intelligent capable d'accompagner les utilisateurs tout au long de leur parcours d'apprentissage.
+
+Afin de répondre à ces besoins, une architecture moderne reposant sur React, Supabase et PostgreSQL a été mise en œuvre. Cette architecture a permis de garantir la performance, la sécurité et la scalabilité de la plateforme. Les différentes fonctionnalités prévues lors de l'analyse ont été développées et intégrées avec succès, notamment :
+
+\begin{itemize}
+    \item l'authentification sécurisée des utilisateurs ;
+    \item la gestion des formations, modules et leçons ;
+    \item le suivi personnalisé de la progression ;
+    \item les systèmes de quiz et d'évaluation ;
+    \item la génération automatique de certificats ;
+    \item l'intégration des paiements en ligne via Stripe ;
+    \item l'internationalisation de la plateforme avec prise en charge du français et de l'arabe ;
+    \item l'assistant pédagogique intelligent ARIA basé sur une architecture RAG.
+\end{itemize}
+
+Les phases de tests et de validation ont permis de vérifier le bon fonctionnement de l'ensemble des fonctionnalités développées. Les résultats obtenus démontrent la robustesse de la solution, sa compatibilité avec différents environnements ainsi que sa capacité à offrir une expérience utilisateur fluide et sécurisée.
+
+Au-delà des compétences techniques acquises dans les domaines du développement web moderne, de l'intelligence artificielle générative et des bases de données, ce stage a également constitué une expérience professionnelle enrichissante. Il a permis de renforcer les compétences en gestion de projet, en analyse des besoins, en conception logicielle et en résolution de problèmes complexes.
+
+Malgré les résultats obtenus, plusieurs perspectives d'évolution peuvent être envisagées afin d'enrichir davantage la plateforme. Parmi celles-ci figurent :
+
+\begin{itemize}
+    \item le développement d'une application mobile native ;
+    \item l'intégration de mécanismes de gamification avancés ;
+    \item l'ajout de recommandations pédagogiques basées sur l'apprentissage automatique ;
+    \item l'amélioration des capacités conversationnelles d'ARIA grâce à des modèles d'intelligence artificielle plus spécialisés ;
+    \item l'intégration de classes virtuelles et de fonctionnalités collaboratives en temps réel ;
+    \item la mise en place d'outils analytiques avancés destinés aux administrateurs et formateurs.
+\end{itemize}
+
+En conclusion, ce projet a permis de concrétiser une plateforme e-learning intelligente répondant aux besoins actuels de la formation numérique. Il constitue une base solide pour le développement futur de solutions pédagogiques innovantes intégrant les avancées récentes de l'intelligence artificielle.
+
+
+\chapter*{Bibliographie}
+\addcontentsline{toc}{chapter}{Bibliographie}
+
+\begin{enumerate}
+
+\item React Team, \textit{React Documentation}, Meta Platforms Inc., 2025.
+
+\item Supabase Inc., \textit{Supabase Documentation}, 2025.
+
+\item PostgreSQL Global Development Group, \textit{PostgreSQL Documentation}, Version 15, 2025.
+
+\item Stripe Inc., \textit{Stripe API Documentation}, 2025.
+
+\item Google DeepMind, \textit{Gemini API Documentation}, 2025.
+
+\item pgvector Contributors, \textit{pgvector Documentation}, 2025.
+
+\item Vercel Inc., \textit{Vercel Documentation}, 2025.
+
+\item Tailwind Labs, \textit{Tailwind CSS Documentation}, Version 3, 2025.
+
+\item i18next Contributors, \textit{i18next Documentation}, 2025.
+
+\item Martin Kleppmann, \textit{Designing Data-Intensive Applications}, O'Reilly Media, 2017.
+
+\item Ian Goodfellow, Yoshua Bengio, Aaron Courville, \textit{Deep Learning}, MIT Press, 2016.
+
+\item Stuart Russell et Peter Norvig, \textit{Artificial Intelligence: A Modern Approach}, Pearson, 4ème édition, 2021.
+
+\end{enumerate}
+
+\chapter*{Webographie}
+\addcontentsline{toc}{chapter}{Webographie}
+
+\begin{enumerate}
+
+\item https://react.dev
+
+\item https://supabase.com/docs
+
+\item https://www.postgresql.org/docs
+
+\item https://stripe.com/docs
+
+\item https://ai.google.dev
+
+\item https://github.com/pgvector/pgvector
+
+\item https://vercel.com/docs
+
+\item https://tailwindcss.com/docs
+
+\item https://www.i18next.com
+
+\end{enumerate}
+%%%%
+\chapter*{Annexes}
+Aucune annexe supplémentaire n'a été jugée nécessaire. Les principaux éléments techniques, diagrammes, schémas de conception, captures d'écran et résultats de tests ont été intégrés directement dans le corps du rapport afin de faciliter la compréhension du projet.
+\end{document}
